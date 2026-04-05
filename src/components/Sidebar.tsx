@@ -8,6 +8,7 @@ import {
   MessageCircle,
   MessageSquare,
   School,
+  Globe,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -45,6 +46,11 @@ const menuItems = [
     href: "/community",
     icon: MessageSquare,
     badge: "NEW",
+  },
+  {
+    label: "입시사이트",
+    href: "/sites",
+    icon: Globe,
   },
   {
     label: "학원정보",

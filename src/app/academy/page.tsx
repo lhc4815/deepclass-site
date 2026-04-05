@@ -1,285 +1,221 @@
+"use client";
+
 import {
   School,
   MapPin,
-  Clock,
-  Phone,
+  ExternalLink,
+  Star,
   BookOpen,
   Users,
-  Star,
-  ChevronRight,
-  Award,
-  CheckCircle,
-  ArrowRight,
-  Sparkles,
-  MessageCircle,
+  Search,
+  MonitorPlay,
+  Building,
+  GraduationCap,
+  Phone,
 } from "lucide-react";
-import Link from "next/link";
+import { useState } from "react";
 
-const programs = [
+interface Academy {
+  name: string;
+  url: string;
+  description: string;
+  location: string;
+  specialties: string[];
+  type: string;
+  rating?: number;
+}
+
+interface AcademyCategory {
+  id: string;
+  label: string;
+  icon: typeof School;
+  color: string;
+  academies: Academy[];
+}
+
+const academyCategories: AcademyCategory[] = [
   {
-    title: "수시 종합반",
-    description: "학생부교과/학종 대비 통합 프로그램",
-    duration: "6개월",
-    target: "고2 ~ 고3",
-    features: ["생기부 관리", "자소서 첨삭", "면접 대비", "포트폴리오 구성"],
+    id: "major",
+    label: "대형 입시학원",
+    icon: Building,
     color: "from-blue-500 to-blue-600",
-    popular: true,
+    academies: [
+      { name: "대성학원", url: "https://www.daesung.com", description: "재수종합반 명문, 전국 단위 대형 입시학원", location: "대치동 본원 외 전국", specialties: ["재수종합반", "수능", "정시"], type: "종합", rating: 4.5 },
+      { name: "종로학원", url: "https://www.jongro.co.kr", description: "70년 전통의 입시 명문, 재수·수능 전문", location: "종로 본원 외 전국", specialties: ["재수종합반", "수능", "입시분석"], type: "종합", rating: 4.4 },
+      { name: "이투스247", url: "https://www.etoos247.com", description: "이투스 재수종합반, 체계적 관리형 학원", location: "노량진·강남 외 전국", specialties: ["재수종합반", "관리형", "수능"], type: "종합", rating: 4.3 },
+      { name: "메가스터디학원", url: "https://academy.megastudy.net", description: "메가스터디 오프라인 학원, 재수·수능 전문", location: "강남·목동 외 전국", specialties: ["재수종합반", "수능", "단과"], type: "종합", rating: 4.3 },
+      { name: "비상에듀학원", url: "https://www.visangedu.com", description: "비상교육 계열 입시학원", location: "대치동 외", specialties: ["수능", "내신", "종합반"], type: "종합", rating: 4.2 },
+    ],
   },
   {
-    title: "정시 올인원",
-    description: "수능 전과목 집중 관리 프로그램",
-    duration: "12개월",
-    target: "고3, 재수생",
-    features: ["전과목 강의", "주간 모의고사", "1:1 약점 분석", "성적 관리"],
-    color: "from-emerald-500 to-emerald-600",
-    popular: false,
-  },
-  {
-    title: "논술 특강",
-    description: "주요대 논술 유형별 집중 훈련",
-    duration: "3개월",
-    target: "고3",
-    features: ["대학별 유형 분석", "실전 모의논술", "첨삭 지도", "기출 풀이"],
-    color: "from-violet-500 to-purple-600",
-    popular: false,
-  },
-  {
-    title: "입시 컨설팅",
-    description: "1:1 맞춤형 입시 전략 수립",
-    duration: "상시",
-    target: "고1 ~ 고3, 학부모",
-    features: ["성적 분석", "지원 전략", "학과 추천", "로드맵 설계"],
+    id: "daechi",
+    label: "대치동 유명학원",
+    icon: Star,
     color: "from-amber-500 to-orange-600",
-    popular: true,
-  },
-];
-
-const instructors = [
-  {
-    name: "김입시",
-    role: "수시전형 전문",
-    experience: "15년",
-    subject: "학종/교과",
-    desc: "서울대 출신, 수시 합격자 500+명 배출",
-    color: "from-blue-400 to-blue-500",
+    academies: [
+      { name: "시대인재", url: "https://www.sdij.co.kr", description: "대치동 대표 입시학원, 수능·수시 전문", location: "대치동", specialties: ["수능", "수시", "논술", "면접"], type: "입시전문", rating: 4.6 },
+      { name: "유웨이학원", url: "https://www.uway.com", description: "입시 컨설팅 전문, 수시·정시 전략 수립", location: "대치동", specialties: ["입시컨설팅", "수시", "정시"], type: "컨설팅", rating: 4.4 },
+      { name: "강남대성학원", url: "https://www.gnds.co.kr", description: "강남 대성학원, 재수종합반", location: "대치동", specialties: ["재수종합반", "수능", "정시"], type: "종합", rating: 4.5 },
+      { name: "청솔학원", url: "https://www.chungsol.co.kr", description: "재수·반수 전문, 강남권 대표 학원", location: "대치동·강남", specialties: ["재수", "반수", "수능"], type: "재수전문", rating: 4.3 },
+    ],
   },
   {
-    name: "이수능",
-    role: "수능 국어 강사",
-    experience: "12년",
-    subject: "국어",
-    desc: "매년 수능 국어 만점자 다수 배출",
-    color: "from-emerald-400 to-emerald-500",
+    id: "online",
+    label: "온라인 인강",
+    icon: MonitorPlay,
+    color: "from-violet-500 to-purple-600",
+    academies: [
+      { name: "메가스터디", url: "https://www.megastudy.net", description: "국내 최대 온라인 수능 인강 플랫폼", location: "온라인", specialties: ["수능", "내신", "전과목"], type: "인강", rating: 4.5 },
+      { name: "대성마이맥", url: "https://www.mimacstudy.com", description: "대성학원 계열 온라인 인강", location: "온라인", specialties: ["수능", "내신", "전과목"], type: "인강", rating: 4.4 },
+      { name: "이투스", url: "https://www.etoos.com", description: "수능·내신 인강, 모의고사 서비스", location: "온라인", specialties: ["수능", "내신", "모의고사"], type: "인강", rating: 4.3 },
+      { name: "EBSi", url: "https://www.ebsi.co.kr", description: "교육부 운영 무료 수능 강의", location: "온라인", specialties: ["수능", "무료", "전과목"], type: "무료인강", rating: 4.6 },
+      { name: "스카이에듀", url: "https://www.skyedu.com", description: "하늘교육 온라인 수능 인강", location: "온라인", specialties: ["수능", "내신"], type: "인강", rating: 4.2 },
+    ],
   },
   {
-    name: "박논술",
-    role: "논술 전문 강사",
-    experience: "10년",
-    subject: "인문논술",
-    desc: "연세대, 성균관대 논술 출제위원 경력",
-    color: "from-violet-400 to-violet-500",
+    id: "consulting",
+    label: "입시 컨설팅",
+    icon: GraduationCap,
+    color: "from-emerald-500 to-emerald-600",
+    academies: [
+      { name: "진학사", url: "https://www.jinhak.com", description: "대한민국 대표 입시 정보·컨설팅 기업", location: "온라인·오프라인", specialties: ["합격예측", "배치표", "컨설팅"], type: "컨설팅", rating: 4.5 },
+      { name: "유웨이", url: "https://www.uway.com", description: "입시 정보, 성적 분석, 합격 예측", location: "온라인·오프라인", specialties: ["합격예측", "성적분석", "전형"], type: "컨설팅", rating: 4.4 },
+      { name: "새이솔", url: "https://www.saeisol.com", description: "입시 리포트, 전형 분석 전문", location: "온라인", specialties: ["입시리포트", "전형분석", "데이터"], type: "분석", rating: 4.3 },
+      { name: "하이스트", url: "https://www.hiest.co.kr", description: "1:1 맞춤 입시 컨설팅, 학종 전문", location: "강남·대치", specialties: ["학종", "자소서", "면접"], type: "컨설팅", rating: 4.4 },
+    ],
   },
   {
-    name: "최컨설",
-    role: "입시 컨설턴트",
-    experience: "20년",
-    subject: "진학상담",
-    desc: "전 대학입학처 입학사정관 출신",
-    color: "from-amber-400 to-amber-500",
+    id: "subject",
+    label: "과목별 전문학원",
+    icon: BookOpen,
+    color: "from-rose-500 to-pink-600",
+    academies: [
+      { name: "현우진 수학 (메가)", url: "https://www.megastudy.net", description: "수능 수학 대표 강사, 메가스터디 소속", location: "온라인", specialties: ["수학", "수능"], type: "과목전문" },
+      { name: "박광일 영어 (메가)", url: "https://www.megastudy.net", description: "수능 영어 강사, 체계적 독해 강의", location: "온라인", specialties: ["영어", "수능"], type: "과목전문" },
+      { name: "최서희 국어 (대성)", url: "https://www.mimacstudy.com", description: "수능 국어 강사, 문학·비문학 전문", location: "온라인", specialties: ["국어", "수능"], type: "과목전문" },
+      { name: "CMS에듀", url: "https://www.cmsedu.co.kr", description: "수학 사고력 전문 학원 프랜차이즈", location: "전국", specialties: ["수학", "사고력", "영재"], type: "과목전문", rating: 4.3 },
+    ],
   },
-];
-
-const achievements = [
-  { label: "누적 합격생", value: "2,500+", suffix: "명" },
-  { label: "SKY 합격률", value: "32", suffix: "%" },
-  { label: "강사 경력", value: "15", suffix: "년+" },
-  { label: "학부모 만족도", value: "98", suffix: "%" },
 ];
 
 export default function AcademyPage() {
-  return (
-    <div className="max-w-[1400px] mx-auto space-y-6 animate-fade-in">
-      {/* Hero Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-primary-700 via-primary-800 to-primary-950 rounded-2xl p-8 text-white">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/3" />
-        <div className="absolute bottom-0 left-1/4 w-48 h-48 bg-white/5 rounded-full translate-y-1/2" />
-        <div className="absolute top-1/2 right-1/4 w-24 h-24 bg-white/5 rounded-full" />
+  const [activeCategory, setActiveCategory] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
+  const filtered = activeCategory === "all"
+    ? academyCategories
+    : academyCategories.filter((c) => c.id === activeCategory);
+
+  const searchFiltered = searchQuery
+    ? filtered.map((c) => ({
+        ...c,
+        academies: c.academies.filter(
+          (a) =>
+            a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            a.description.includes(searchQuery) ||
+            a.specialties.some((s) => s.includes(searchQuery))
+        ),
+      })).filter((c) => c.academies.length > 0)
+    : filtered;
+
+  return (
+    <div className="max-w-[1400px] mx-auto space-y-5 animate-fade-in">
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-xl font-bold">학원정보</h1>
+          <p className="text-sm text-muted mt-0.5">입시 학원·인강·컨설팅 정보를 모았습니다</p>
+        </div>
         <div className="relative">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white/15 rounded-full text-xs font-medium backdrop-blur-sm">
-              <Award className="w-3 h-3" />
-              Since 2010
-            </div>
-          </div>
-          <h1 className="text-2xl font-bold mb-2">딥클래스 입시학원</h1>
-          <p className="text-primary-200 text-sm max-w-xl leading-relaxed">
-            체계적인 입시 전략과 개인 맞춤형 컨설팅으로 학생의 꿈을 실현합니다.
-            수시·정시 전문 강사진과 함께 최적의 입시 로드맵을 설계하세요.
-          </p>
-          <div className="flex flex-wrap gap-4 mt-5 text-sm">
-            <div className="flex items-center gap-2 text-primary-200">
-              <MapPin className="w-4 h-4" />
-              서울시 강남구 테헤란로 123
-            </div>
-            <div className="flex items-center gap-2 text-primary-200">
-              <Phone className="w-4 h-4" />
-              02-1234-5678
-            </div>
-            <div className="flex items-center gap-2 text-primary-200">
-              <Clock className="w-4 h-4" />
-              평일 09:00~22:00 / 토 09:00~18:00
-            </div>
-          </div>
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-light" />
+          <input
+            type="text"
+            placeholder="학원 검색..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 pr-4 py-2 bg-surface border border-border rounded-xl text-sm placeholder:text-muted-light focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-300 w-56 transition-all"
+          />
         </div>
       </div>
 
-      {/* Achievements */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {achievements.map((a) => (
-          <div key={a.label} className="bg-surface rounded-2xl border border-border p-5 text-center">
-            <p className="text-3xl font-extrabold text-gradient">
-              {a.value}<span className="text-lg">{a.suffix}</span>
-            </p>
-            <p className="text-xs text-muted mt-1 font-medium">{a.label}</p>
-          </div>
+      {/* Category Filter */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+        <button
+          onClick={() => setActiveCategory("all")}
+          className={`px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${
+            activeCategory === "all" ? "bg-primary-600 text-white shadow-lg shadow-primary-600/20" : "bg-surface border border-border text-muted hover:border-primary-200"
+          }`}
+        >
+          전체
+        </button>
+        {academyCategories.map((cat) => (
+          <button
+            key={cat.id}
+            onClick={() => setActiveCategory(cat.id)}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${
+              activeCategory === cat.id ? "bg-primary-600 text-white shadow-lg shadow-primary-600/20" : "bg-surface border border-border text-muted hover:border-primary-200"
+            }`}
+          >
+            {cat.label}
+          </button>
         ))}
       </div>
 
-      {/* Programs */}
-      <div>
-        <div className="flex items-center gap-2.5 mb-4">
-          <div className="w-8 h-8 bg-primary-50 rounded-lg flex items-center justify-center">
-            <BookOpen className="w-4 h-4 text-primary-600" />
+      {/* Academy Cards */}
+      {searchFiltered.map((cat) => (
+        <div key={cat.id} className="space-y-3">
+          <div className="flex items-center gap-2.5">
+            <div className={`w-8 h-8 bg-gradient-to-br ${cat.color} rounded-lg flex items-center justify-center shadow-sm`}>
+              <cat.icon className="w-4 h-4 text-white" />
+            </div>
+            <h2 className="text-sm font-bold">{cat.label}</h2>
+            <span className="text-[11px] text-muted-light">{cat.academies.length}개</span>
           </div>
-          <div>
-            <h2 className="text-base font-bold">프로그램 안내</h2>
-            <p className="text-[11px] text-muted-light">목표에 맞는 프로그램을 선택하세요</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {programs.map((program) => (
-            <div
-              key={program.title}
-              className="relative bg-surface rounded-2xl border border-border p-5 hover:shadow-[var(--shadow-card-hover)] hover:border-primary-200 transition-all duration-300 group cursor-pointer"
-            >
-              {program.popular && (
-                <span className="absolute -top-2.5 right-4 px-2.5 py-0.5 bg-gradient-to-r from-amber-400 to-orange-500 text-[10px] font-bold text-white rounded-full shadow-lg">
-                  인기
-                </span>
-              )}
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 bg-gradient-to-br ${program.color} rounded-xl flex items-center justify-center shadow-lg shadow-black/10`}>
-                    <BookOpen className="w-5 h-5 text-white" />
-                  </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {cat.academies.map((academy) => (
+              <a
+                key={academy.name + academy.url}
+                href={academy.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-surface rounded-2xl border border-border p-4 hover:shadow-[var(--shadow-card-hover)] hover:border-primary-200 transition-all duration-300 group"
+              >
+                <div className="flex items-start justify-between mb-2">
                   <div>
-                    <h3 className="font-bold text-sm group-hover:text-primary-600 transition-colors">
-                      {program.title}
-                    </h3>
-                    <p className="text-[11px] text-muted">{program.description}</p>
+                    <h3 className="text-[13px] font-semibold group-hover:text-primary-600 transition-colors">{academy.name}</h3>
+                    <span className="text-[10px] text-muted-light">{academy.type}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {academy.rating && (
+                      <span className="flex items-center gap-0.5 text-[10px] font-bold text-amber-600">
+                        <Star className="w-3 h-3 text-amber-400" fill="currentColor" />
+                        {academy.rating}
+                      </span>
+                    )}
+                    <ExternalLink className="w-3.5 h-3.5 text-muted-light opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-muted-light group-hover:text-primary-600 transition-colors" />
-              </div>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="px-2 py-0.5 bg-primary-50 text-primary-700 text-[10px] font-semibold rounded-md border border-primary-100">
-                  {program.duration}
-                </span>
-                <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-semibold rounded-md border border-emerald-100">
-                  {program.target}
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {program.features.map((f) => (
-                  <span
-                    key={f}
-                    className="flex items-center gap-1 px-2 py-0.5 bg-surface-secondary text-[11px] text-muted rounded-md"
-                  >
-                    <CheckCircle className="w-3 h-3 text-primary-400" />
-                    {f}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ))}
+                <p className="text-[11px] text-muted leading-relaxed mb-2.5">{academy.description}</p>
+                <div className="flex items-center gap-1 text-[10px] text-muted-light mb-2">
+                  <MapPin className="w-3 h-3" />{academy.location}
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {academy.specialties.map((s) => (
+                    <span key={s} className="px-1.5 py-0.5 bg-surface-secondary text-[9px] font-medium text-muted-light rounded">{s}</span>
+                  ))}
+                </div>
+              </a>
+            ))}
+          </div>
         </div>
-      </div>
+      ))}
 
-      {/* Instructors */}
-      <div>
-        <div className="flex items-center gap-2.5 mb-4">
-          <div className="w-8 h-8 bg-violet-50 rounded-lg flex items-center justify-center">
-            <Users className="w-4 h-4 text-violet-600" />
-          </div>
-          <div>
-            <h2 className="text-base font-bold">전문 강사진</h2>
-            <p className="text-[11px] text-muted-light">경력과 실력을 겸비한 입시 전문가</p>
-          </div>
+      {searchFiltered.length === 0 && (
+        <div className="text-center py-16">
+          <School className="w-12 h-12 text-muted-light mx-auto mb-3" />
+          <p className="text-sm text-muted">검색 결과가 없습니다.</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {instructors.map((inst) => (
-            <div
-              key={inst.name}
-              className="bg-surface rounded-2xl border border-border p-5 hover:shadow-[var(--shadow-card-hover)] hover:border-primary-200 transition-all duration-300 group"
-            >
-              <div className="text-center mb-4">
-                <div className={`w-16 h-16 bg-gradient-to-br ${inst.color} rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-black/10 group-hover:scale-110 transition-transform duration-300`}>
-                  <span className="text-xl font-bold text-white">{inst.name[0]}</span>
-                </div>
-              </div>
-              <div className="text-center">
-                <h3 className="font-bold text-sm">{inst.name}</h3>
-                <p className="text-[11px] text-primary-600 font-semibold mt-0.5">{inst.role}</p>
-                <p className="text-[11px] text-muted mt-1.5 leading-relaxed">{inst.desc}</p>
-                <div className="flex items-center justify-center gap-3 mt-3 pt-3 border-t border-border-light">
-                  <div className="text-center">
-                    <p className="text-xs font-bold">{inst.experience}</p>
-                    <p className="text-[9px] text-muted-light">경력</p>
-                  </div>
-                  <div className="w-px h-6 bg-border" />
-                  <div className="text-center">
-                    <p className="text-xs font-bold">{inst.subject}</p>
-                    <p className="text-[9px] text-muted-light">담당</p>
-                  </div>
-                  <div className="w-px h-6 bg-border" />
-                  <div className="text-center flex items-center gap-0.5">
-                    <Star className="w-3 h-3 text-amber-400" fill="currentColor" />
-                    <p className="text-xs font-bold">4.9</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* CTA */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-primary-50 to-violet-50 rounded-2xl border border-primary-100 p-8">
-        <div className="absolute right-0 top-0 w-64 h-64 bg-primary-100/30 rounded-full -translate-y-1/2 translate-x-1/3" />
-        <div className="relative flex flex-col sm:flex-row items-center gap-6">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="w-5 h-5 text-primary-600" />
-              <h3 className="text-lg font-bold">무료 입시 상담</h3>
-            </div>
-            <p className="text-sm text-muted leading-relaxed">
-              입시 전문가와 1:1 상담을 통해 맞춤형 입시 전략을 수립하세요.
-              학생의 현재 성적과 목표에 맞는 최적의 진학 경로를 안내합니다.
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <button className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl text-sm font-semibold hover:from-primary-700 hover:to-primary-800 transition-all shadow-lg shadow-primary-600/20">
-              <MessageCircle className="w-4 h-4" />
-              상담 신청하기
-            </button>
-            <button className="inline-flex items-center gap-2 px-6 py-3 bg-surface border border-border text-foreground rounded-xl text-sm font-semibold hover:border-primary-300 transition-all">
-              <Phone className="w-4 h-4" />
-              전화 문의
-            </button>
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
