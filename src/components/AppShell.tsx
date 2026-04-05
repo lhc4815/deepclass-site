@@ -16,10 +16,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-full">
+      <div className="w-[200px] flex-shrink-0" />
       <Sidebar />
       <div className="flex-1 min-h-screen flex flex-col min-w-0">
         <Header />
-        <main className="flex-1 p-6 overflow-y-auto">{children}</main>
+        <main className="flex-1 p-4 overflow-y-auto">{children}</main>
       </div>
     </div>
   );
