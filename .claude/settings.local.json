@@ -40,7 +40,8 @@
       "Bash(curl -s https://deepclasssite.vercel.app/api/schedules?upcoming=true\\\\&limit=5)",
       "Bash(curl -s http://localhost:3000/api/schedules)",
       "Bash(curl -s \"https://open.neis.go.kr/hub/schoolInfo?KEY=7e5f66bbfb144678879f0184670c9bb2&Type=json&SCHUL_KND_SC_NM=%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90&ATPT_OFCDC_SC_CODE=B10&pIndex=1&pSize=3\")",
-      "Bash(curl -s -k \"https://open.neis.go.kr/hub/schoolInfo?KEY=7e5f66bbfb144678879f0184670c9bb2&Type=json&SCHUL_KND_SC_NM=%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90&ATPT_OFCDC_SC_CODE=B10&pIndex=1&pSize=3\")"
+      "Bash(curl -s -k \"https://open.neis.go.kr/hub/schoolInfo?KEY=7e5f66bbfb144678879f0184670c9bb2&Type=json&SCHUL_KND_SC_NM=%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90&ATPT_OFCDC_SC_CODE=B10&pIndex=1&pSize=3\")",
+      "Bash(curl -s -k \"https://open.neis.go.kr/hub/schoolInfo?KEY=7e5f66bbfb144678879f0184670c9bb2&Type=json&SCHUL_KND_SC_NM=%EB%8C%80%ED%95%99%EA%B5%90&pIndex=1&pSize=3\")"
     ]
   }
 }

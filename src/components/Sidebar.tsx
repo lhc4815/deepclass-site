@@ -23,6 +23,7 @@ const menuItems = [
   { label: "입시Chat", href: "/chat", icon: MessageCircle, badge: "AI" },
   { label: "커뮤니티", href: "/community", icon: MessageSquare },
   { label: "입시정보", href: "/sites", icon: BookOpen },
+  { label: "대학정보", href: "/universities", icon: GraduationCap },
   { label: "학교정보", href: "/schools", icon: Building },
   { label: "학원정보", href: "/academy", icon: School },
 ];
