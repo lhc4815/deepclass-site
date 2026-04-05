@@ -14,7 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
-import { getAllSchedules, getDday, type ScheduleItem } from "@/lib/schedule-data";
+import { getDday } from "@/lib/schedule-data";
 
 const tabs = [
   { id: "videos", label: "영상", icon: Play },
@@ -42,7 +42,10 @@ interface YouTubeVideo {
   videoUrl: string;
 }
 
-const scheduleData = getAllSchedules();
+interface ScheduleItem {
+  id: number; date: string; end_date: string | null; title: string;
+  type: string; category: string; important: boolean; description: string | null;
+}
 
 const typeColors: Record<string, string> = {
   "수능": "bg-rose-50 text-rose-600 border-rose-100",
@@ -80,6 +83,8 @@ export default function InfoPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [scheduleData, setScheduleData] = useState<ScheduleItem[]>([]);
+  const [scheduleLoading, setScheduleLoading] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<YouTubeVideo | null>(null);
 
   const fetchVideos = useCallback(async (category: string, query?: string) => {
@@ -106,6 +111,14 @@ export default function InfoPage() {
   useEffect(() => {
     if (activeTab === "videos") {
       fetchVideos(activeVideoCategory);
+    }
+    if (activeTab === "schedule" && scheduleData.length === 0) {
+      setScheduleLoading(true);
+      fetch("/api/schedules")
+        .then((r) => r.json())
+        .then((d) => { if (d.success) setScheduleData(d.data); })
+        .catch(() => {})
+        .finally(() => setScheduleLoading(false));
     }
   }, [activeVideoCategory, activeTab, fetchVideos]);
 
@@ -264,6 +277,9 @@ export default function InfoPage() {
 
       {/* Schedule Tab */}
       {activeTab === "schedule" && (
+        scheduleLoading ? (
+          <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 text-primary-600 animate-spin" /></div>
+        ) : (
         <div className="bg-surface rounded-2xl border border-border overflow-hidden">
           <div className="px-5 py-3 border-b border-border bg-surface-secondary/50 flex items-center gap-4 text-[11px]">
             <span className="text-muted-light font-medium">2027학년도 대입 일정</span>
@@ -312,7 +328,7 @@ export default function InfoPage() {
                       </h3>
                     </div>
                     <p className="text-[11px] text-muted-light">
-                      {item.date}{item.endDate ? ` ~ ${item.endDate}` : ""}
+                      {item.date}{item.end_date ? ` ~ ${item.end_date}` : ""}
                       {item.description && ` · ${item.description}`}
                     </p>
                   </div>
@@ -329,6 +345,7 @@ export default function InfoPage() {
             })}
           </div>
         </div>
+        )
       )}
 
       {/* Resources Tab */}

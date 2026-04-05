@@ -23,7 +23,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { NewsItem } from "@/lib/news-sources";
 import NewsImage from "@/components/NewsImage";
-import { getUpcomingSchedules, getDday } from "@/lib/schedule-data";
+import { getDday } from "@/lib/schedule-data";
 
 interface YouTubeVideo {
   id: string;
@@ -44,16 +44,9 @@ const categoryColors: Record<string, string> = {
   "의대": "bg-emerald-50 text-emerald-600 border-emerald-100",
 };
 
-const upcomingSchedule = getUpcomingSchedules(5).map((s) => {
-  const d = new Date(s.date);
-  return {
-    month: String(d.getMonth() + 1),
-    day: String(d.getDate()).padStart(2, "0"),
-    title: s.title,
-    type: s.type,
-    dday: getDday(s.date),
-  };
-});
+interface ScheduleRow {
+  id: number; date: string; title: string; type: string;
+}
 
 function timeAgo(dateStr: string): string {
   const now = new Date();
@@ -83,6 +76,7 @@ export default function HomePage() {
   const [newsLoading, setNewsLoading] = useState(true);
   const [videosLoading, setVideosLoading] = useState(true);
   const [playingVideo, setPlayingVideo] = useState<YouTubeVideo | null>(null);
+  const [upcomingSchedule, setUpcomingSchedule] = useState<{ month: string; day: string; title: string; type: string; dday: string }[]>([]);
 
   useEffect(() => {
     // 뉴스 로드
@@ -98,6 +92,19 @@ export default function HomePage() {
       .then((d) => { if (d.success) setVideos(d.data || []); })
       .catch(() => {})
       .finally(() => setVideosLoading(false));
+
+    // 일정 로드
+    fetch("/api/schedules?upcoming=true&limit=5")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success) {
+          setUpcomingSchedule(d.data.map((s: ScheduleRow) => {
+            const dd = new Date(s.date);
+            return { month: String(dd.getMonth() + 1), day: String(dd.getDate()).padStart(2, "0"), title: s.title, type: s.type, dday: getDday(s.date) };
+          }));
+        }
+      })
+      .catch(() => {});
   }, []);
 
   return (

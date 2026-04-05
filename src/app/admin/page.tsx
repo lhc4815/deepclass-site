@@ -18,11 +18,18 @@ import {
   Filter,
   Download,
   RefreshCw,
+  Calendar,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+interface ScheduleItem {
+  id: number; date: string; end_date: string | null; title: string;
+  type: string; category: string; important: boolean; description: string | null;
+}
 
 const adminTabs = [
   { id: "dashboard", label: "대시보드", icon: BarChart3 },
+  { id: "schedule", label: "일정 관리", icon: Calendar },
   { id: "news", label: "뉴스 관리", icon: Newspaper },
   { id: "videos", label: "영상 관리", icon: Play },
   { id: "users", label: "회원 관리", icon: Users },
@@ -394,6 +401,180 @@ export default function AdminPage() {
               인증 설정하기
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Schedule Management Tab */}
+      {activeTab === "schedule" && <ScheduleManager />}
+    </div>
+  );
+}
+
+/* ── 일정 관리 컴포넌트 ── */
+const TYPES = ["수능", "원서접수", "전형", "합격발표", "등록", "발표", "모집", "기타"];
+const CATEGORIES = ["공통", "수시", "정시"];
+
+function ScheduleManager() {
+  const [items, setItems] = useState<ScheduleItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ date: "", end_date: "", title: "", type: "기타", category: "공통", important: false, description: "" });
+  const [saving, setSaving] = useState(false);
+
+  const fetchSchedules = () => {
+    setLoading(true);
+    fetch("/api/schedules")
+      .then((r) => r.json())
+      .then((d) => { if (d.success) setItems(d.data); })
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { fetchSchedules(); }, []);
+
+  const handleAdd = async () => {
+    if (!form.date || !form.title) return;
+    setSaving(true);
+    const res = await fetch("/api/schedules", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...form, end_date: form.end_date || null, description: form.description || null }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      setShowForm(false);
+      setForm({ date: "", end_date: "", title: "", type: "기타", category: "공통", important: false, description: "" });
+      fetchSchedules();
+    } else {
+      alert(data.error || "저장 실패");
+    }
+    setSaving(false);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("정말 삭제하시겠습니까?")) return;
+    const res = await fetch("/api/schedules", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    const data = await res.json();
+    if (data.success) fetchSchedules();
+    else alert(data.error || "삭제 실패");
+  };
+
+  const typeColors: Record<string, string> = {
+    "수능": "bg-rose-50 text-rose-600", "원서접수": "bg-emerald-50 text-emerald-600",
+    "전형": "bg-purple-50 text-purple-600", "합격발표": "bg-amber-50 text-amber-600",
+    "등록": "bg-blue-50 text-blue-600", "발표": "bg-sky-50 text-sky-600",
+    "모집": "bg-orange-50 text-orange-600", "기타": "bg-gray-50 text-gray-600",
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold">입시 일정 ({items.length}개)</h2>
+        <div className="flex gap-2">
+          <button onClick={fetchSchedules} className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium bg-surface border border-border text-muted hover:bg-surface-hover transition-all">
+            <RefreshCw className="w-3.5 h-3.5" />새로고침
+          </button>
+          <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl text-sm font-medium hover:from-primary-700 hover:to-primary-800 transition-all shadow-lg shadow-primary-600/20">
+            <Plus className="w-4 h-4" />일정 추가
+          </button>
+        </div>
+      </div>
+
+      {/* Add Form */}
+      {showForm && (
+        <div className="bg-surface rounded-2xl border border-border p-5 space-y-3 animate-fade-in">
+          <h3 className="text-sm font-semibold">새 일정 추가</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-[11px] font-medium text-muted mb-1 block">시작일 *</label>
+              <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="w-full px-3 py-2 bg-background border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-200" />
+            </div>
+            <div>
+              <label className="text-[11px] font-medium text-muted mb-1 block">종료일</label>
+              <input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} className="w-full px-3 py-2 bg-background border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-200" />
+            </div>
+          </div>
+          <div>
+            <label className="text-[11px] font-medium text-muted mb-1 block">제목 *</label>
+            <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="일정 제목" className="w-full px-3 py-2 bg-background border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-200" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="text-[11px] font-medium text-muted mb-1 block">유형</label>
+              <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="w-full px-3 py-2 bg-background border border-border rounded-xl text-sm">
+                {TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-[11px] font-medium text-muted mb-1 block">분류</label>
+              <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full px-3 py-2 bg-background border border-border rounded-xl text-sm">
+                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div className="flex items-end">
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input type="checkbox" checked={form.important} onChange={(e) => setForm({ ...form, important: e.target.checked })} className="rounded" />
+                중요 일정
+              </label>
+            </div>
+          </div>
+          <div>
+            <label className="text-[11px] font-medium text-muted mb-1 block">설명 (선택)</label>
+            <input type="text" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="추가 설명" className="w-full px-3 py-2 bg-background border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-200" />
+          </div>
+          <div className="flex justify-end gap-2">
+            <button onClick={() => setShowForm(false)} className="px-4 py-2 bg-surface-secondary border border-border rounded-xl text-xs font-medium text-muted">취소</button>
+            <button onClick={handleAdd} disabled={saving || !form.date || !form.title} className="px-4 py-2 bg-primary-600 text-white rounded-xl text-xs font-medium hover:bg-primary-700 disabled:opacity-50">
+              {saving ? "저장 중..." : "저장"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* List */}
+      {loading ? (
+        <div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" /></div>
+      ) : (
+        <div className="bg-surface rounded-2xl border border-border overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-surface-secondary">
+                <th className="text-left p-3 text-[11px] font-semibold text-muted-light uppercase tracking-wider">날짜</th>
+                <th className="text-left p-3 text-[11px] font-semibold text-muted-light uppercase tracking-wider">제목</th>
+                <th className="text-left p-3 text-[11px] font-semibold text-muted-light uppercase tracking-wider w-20">유형</th>
+                <th className="text-left p-3 text-[11px] font-semibold text-muted-light uppercase tracking-wider w-16">분류</th>
+                <th className="text-right p-3 text-[11px] font-semibold text-muted-light uppercase tracking-wider w-16">관리</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border-light">
+              {items.map((item) => (
+                <tr key={item.id} className="hover:bg-surface-hover transition-colors">
+                  <td className="p-3 text-[12px] text-muted whitespace-nowrap">
+                    {item.date}{item.end_date ? ` ~ ${item.end_date}` : ""}
+                  </td>
+                  <td className="p-3">
+                    <div className="flex items-center gap-2">
+                      {item.important && <span className="w-1.5 h-1.5 bg-primary-500 rounded-full" />}
+                      <span className="text-[13px] font-medium">{item.title}</span>
+                    </div>
+                    {item.description && <p className="text-[10px] text-muted-light mt-0.5">{item.description}</p>}
+                  </td>
+                  <td className="p-3">
+                    <span className={`px-2 py-0.5 text-[10px] font-semibold rounded ${typeColors[item.type] || typeColors["기타"]}`}>{item.type}</span>
+                  </td>
+                  <td className="p-3 text-[11px] text-muted">{item.category}</td>
+                  <td className="p-3 text-right">
+                    <button onClick={() => handleDelete(item.id)} className="p-1.5 rounded-lg hover:bg-rose-50 text-muted-light hover:text-rose-500 transition-colors">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
