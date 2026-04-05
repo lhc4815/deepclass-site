@@ -27,34 +27,65 @@ export default function NewsPage() {
   const [activeCategory, setActiveCategory] = useState("전체");
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const PER_PAGE = 20;
 
-  const fetchNews = useCallback(async (category: string) => {
-    setLoading(true);
+  const fetchNews = useCallback(async (category: string, pageNum: number, append = false) => {
+    if (pageNum === 1) setLoading(true); else setLoadingMore(true);
     try {
+      // 네이버 API는 start 파라미터로 페이징 가능
+      const naverStart = (pageNum - 1) * PER_PAGE + 1;
       const [rssRes, naverRes] = await Promise.allSettled([
-        fetch(`/api/news/rss?category=${encodeURIComponent(category)}&limit=30`),
-        fetch(`/api/news/naver?category=${encodeURIComponent(category)}&limit=30`),
+        pageNum === 1 ? fetch(`/api/news/rss?category=${encodeURIComponent(category)}&limit=50`) : Promise.reject("skip"),
+        fetch(`/api/news/naver?category=${encodeURIComponent(category)}&limit=${PER_PAGE}&start=${naverStart}`),
       ]);
-      const allItems: NewsItem[] = [];
+
+      const newItems: NewsItem[] = [];
       for (const res of [rssRes, naverRes]) {
         if (res.status === "fulfilled" && res.value.ok) {
           const json = await res.value.json();
-          if (json.success && json.data) allItems.push(...json.data);
+          if (json.success && json.data) newItems.push(...json.data);
         }
       }
-      const seen = new Set<string>();
-      const unique = allItems.filter((item) => {
-        const key = item.title.toLowerCase().trim();
-        if (seen.has(key) || !key) return false;
-        seen.add(key); return true;
-      });
-      unique.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
-      setNews(unique.slice(0, 40));
-    } catch {} finally { setLoading(false); }
-  }, []);
 
-  useEffect(() => { fetchNews(activeCategory); }, [activeCategory, fetchNews]);
+      // 중복 제거
+      const existingTitles = append ? new Set(news.map((n) => n.title.toLowerCase().trim())) : new Set<string>();
+      const unique = newItems.filter((item) => {
+        const key = item.title.toLowerCase().trim();
+        if (existingTitles.has(key) || !key) return false;
+        existingTitles.add(key);
+        return true;
+      });
+
+      unique.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+
+      if (append) {
+        setNews((prev) => [...prev, ...unique]);
+      } else {
+        setNews(unique);
+      }
+
+      setHasMore(newItems.length >= PER_PAGE);
+    } catch {} finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  }, [news]);
+
+  useEffect(() => {
+    setPage(1);
+    setHasMore(true);
+    fetchNews(activeCategory, 1);
+  }, [activeCategory]);
+
+  const loadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchNews(activeCategory, nextPage, true);
+  };
 
   const filteredNews = searchQuery
     ? news.filter((n) => n.title.toLowerCase().includes(searchQuery.toLowerCase()) || n.description.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -73,7 +104,7 @@ export default function NewsPage() {
             <input type="text" placeholder="뉴스 검색" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-8 pr-3 py-[5px] bg-surface border border-border rounded text-[12px] placeholder:text-muted-light focus:outline-none focus:border-primary-400 w-48" />
           </div>
-          <button onClick={() => fetchNews(activeCategory)} className="p-1.5 rounded border border-border text-muted-light hover:text-foreground hover:bg-surface-hover transition-colors">
+          <button onClick={() => { setPage(1); fetchNews(activeCategory, 1); }} className="p-1.5 rounded border border-border text-muted-light hover:text-foreground hover:bg-surface-hover transition-colors">
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
           </button>
         </div>
@@ -99,11 +130,9 @@ export default function NewsPage() {
             {filteredNews.map((item) => (
               <a key={item.id} href={item.link} target="_blank" rel="noopener noreferrer"
                 className="flex gap-3 bg-surface border border-border rounded-lg p-3 hover:border-primary-300 transition-colors group">
-                {/* Thumbnail */}
                 <div className="hidden sm:block w-32 h-20 flex-shrink-0 rounded overflow-hidden bg-surface-secondary">
                   <NewsImage articleUrl={item.link} alt={item.title} />
                 </div>
-                {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 mb-1">
                     <span className={`px-1.5 py-0.5 text-[10px] font-semibold rounded ${categoryColors[item.category] || categoryColors["전체"]}`}>
@@ -128,6 +157,19 @@ export default function NewsPage() {
               </a>
             ))}
           </div>
+
+          {/* 더보기 */}
+          {hasMore && !searchQuery && (
+            <div className="text-center pt-2">
+              <button onClick={loadMore} disabled={loadingMore}
+                className="px-6 py-2 bg-surface border border-border rounded-lg text-[12px] font-medium text-muted hover:bg-surface-hover hover:border-primary-300 transition-colors disabled:opacity-50">
+                {loadingMore ? (
+                  <span className="flex items-center gap-1.5"><Loader2 className="w-3.5 h-3.5 animate-spin" />불러오는 중...</span>
+                ) : "더 많은 뉴스 보기"}
+              </button>
+            </div>
+          )}
+
           {filteredNews.length === 0 && (
             <div className="text-center py-8 text-[13px] text-muted">{searchQuery ? "검색 결과가 없습니다." : "뉴스가 없습니다."}</div>
           )}

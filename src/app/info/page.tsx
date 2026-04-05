@@ -40,15 +40,22 @@ export default function InfoPage() {
   const [scheduleData, setScheduleData] = useState<ScheduleItem[]>([]);
   const [scheduleLoading, setScheduleLoading] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<YouTubeVideo | null>(null);
+  const [nextPageToken, setNextPageToken] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  const fetchVideos = useCallback(async (category: string, query?: string) => {
-    setLoading(true); setError(null);
+  const fetchVideos = useCallback(async (category: string, query?: string, pageToken?: string) => {
+    if (pageToken) setLoadingMore(true); else { setLoading(true); setError(null); }
     try {
       let url = `/api/youtube?category=${encodeURIComponent(category)}&limit=12`;
       if (query) url += `&q=${encodeURIComponent(query + " 입시")}`;
+      if (pageToken) url += `&pageToken=${encodeURIComponent(pageToken)}`;
       const res = await fetch(url); const data = await res.json();
-      if (data.success) setVideos(data.data || []); else setError(data.error);
-    } catch { setError("오류 발생"); } finally { setLoading(false); }
+      if (data.success) {
+        if (pageToken) setVideos((prev) => [...prev, ...(data.data || [])]);
+        else setVideos(data.data || []);
+        setNextPageToken(data.nextPageToken || null);
+      } else setError(data.error);
+    } catch { setError("오류 발생"); } finally { setLoading(false); setLoadingMore(false); }
   }, []);
 
   useEffect(() => {
@@ -102,7 +109,7 @@ export default function InfoPage() {
           ) : error ? (
             <div className="text-center py-8 text-[13px] text-rose-500">{error}</div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            <><div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {videos.map((v) => (
                 <div key={v.id} onClick={() => setSelectedVideo(v)} className="bg-surface border border-border rounded-lg overflow-hidden cursor-pointer group hover:border-primary-300 transition-colors">
                   <div className="aspect-video relative overflow-hidden">
@@ -118,6 +125,19 @@ export default function InfoPage() {
                 </div>
               ))}
             </div>
+
+            {/* 더보기 */}
+            {nextPageToken && (
+              <div className="text-center pt-2">
+                <button onClick={() => fetchVideos(activeCat, searchQuery || undefined, nextPageToken)} disabled={loadingMore}
+                  className="px-6 py-2 bg-surface border border-border rounded-lg text-[12px] font-medium text-muted hover:bg-surface-hover hover:border-primary-300 transition-colors disabled:opacity-50">
+                  {loadingMore ? (
+                    <span className="flex items-center gap-1.5"><Loader2 className="w-3.5 h-3.5 animate-spin" />불러오는 중...</span>
+                  ) : "더 많은 영상 보기"}
+                </button>
+              </div>
+            )}
+          </>
           )}
         </div>
       )}

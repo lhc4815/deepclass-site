@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
   const category = searchParams.get("category") || "전체";
   const limit = Math.min(Number(searchParams.get("limit")) || 12, 24);
   const query = searchParams.get("q") || SEARCH_QUERIES[category] || SEARCH_QUERIES["전체"];
+  const pageToken = searchParams.get("pageToken") || "";
 
   try {
     const url = new URL("https://www.googleapis.com/youtube/v3/search");
@@ -45,6 +46,7 @@ export async function GET(request: NextRequest) {
     url.searchParams.set("regionCode", "KR");
     url.searchParams.set("relevanceLanguage", "ko");
     url.searchParams.set("key", YOUTUBE_API_KEY);
+    if (pageToken) url.searchParams.set("pageToken", pageToken);
 
     const res = await fetch(url.toString());
     if (!res.ok) {
@@ -68,6 +70,7 @@ export async function GET(request: NextRequest) {
       success: true,
       count: videos.length,
       data: videos,
+      nextPageToken: data.nextPageToken || null,
     }, {
       headers: {
         "Cache-Control": "public, max-age=3600, s-maxage=3600",

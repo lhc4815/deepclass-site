@@ -37,6 +37,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const category = searchParams.get("category") || "전체";
   const limit = Math.min(Number(searchParams.get("limit")) || 20, 50);
+  const start = Math.max(Number(searchParams.get("start")) || 1, 1);
 
   try {
     // 카테고리에 해당하는 키워드 필터링
@@ -50,7 +51,8 @@ export async function GET(request: NextRequest) {
       keywords.map(async (kw) => {
         const url = new URL("https://openapi.naver.com/v1/search/news.json");
         url.searchParams.set("query", kw.keyword);
-        url.searchParams.set("display", "10");
+        url.searchParams.set("display", String(Math.min(limit, 100)));
+        url.searchParams.set("start", String(start));
         url.searchParams.set("sort", "date");
 
         const res = await fetch(url.toString(), {
