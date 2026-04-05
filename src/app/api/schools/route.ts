@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 const NEIS_API_KEY = process.env.NEIS_API_KEY;
 
-// 교육청 코드
+// Vercel에서 NEIS SSL 문제 해결
+if (typeof process !== "undefined") {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+}
+
 const OFFICE_CODES: Record<string, string> = {
   "서울": "B10", "부산": "C10", "대구": "D10", "인천": "E10", "광주": "F10",
   "대전": "G10", "울산": "H10", "세종": "I10", "경기": "J10", "강원": "K10",
@@ -45,13 +49,18 @@ export async function GET(request: NextRequest) {
       url.searchParams.set("SCHUL_NM", search);
     }
 
-    // Vercel 호환: agent 없이 fetch 사용
     const res = await fetch(url.toString(), {
       headers: { "Accept": "application/json" },
-      signal: AbortSignal.timeout(10000),
     });
 
-    const data = await res.json();
+    const text = await res.text();
+
+    // HTML 응답 체크 (SSL 에러 등)
+    if (text.startsWith("<!") || text.startsWith("<HTML")) {
+      return NextResponse.json({ success: false, error: "NEIS API SSL 연결 실패" }, { status: 502 });
+    }
+
+    const data = JSON.parse(text);
 
     if (data.RESULT?.CODE === "INFO-200") {
       return NextResponse.json({ success: true, data: [], total: 0, page, size });
