@@ -144,12 +144,12 @@ function LoginContent() {
             </button>
 
             <button
-              onClick={() => handleSocialLogin("naver")}
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-3 px-4 py-2.5 bg-[#03C75A] border border-[#03C75A] rounded-xl text-sm font-medium text-white hover:bg-[#02B350] transition-colors disabled:opacity-50"
+              disabled
+              className="w-full flex items-center justify-center gap-3 px-4 py-2.5 bg-[#03C75A]/50 border border-[#03C75A]/50 rounded-xl text-sm font-medium text-white/70 cursor-not-allowed"
+              title="준비 중입니다"
             >
               <span className="text-lg font-bold">N</span>
-              네이버로 계속하기
+              네이버 (준비중)
             </button>
           </div>
 

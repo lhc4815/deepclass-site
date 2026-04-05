@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <defs>
+    <linearGradient id="bg2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563eb"/>
+      <stop offset="100%" style="stop-color:#1d4ed8"/>
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="42" fill="url(#bg2)"/>
+  <g transform="translate(96,85)" fill="white">
+    <polygon points="0,-42 68,-17 0,8 -68,-17" opacity="0.95"/>
+    <polygon points="0,8 68,-17 68,-10 0,15 -68,-10 -68,-17" opacity="0.7"/>
+    <line x1="0" y1="-42" x2="0" y2="-17" stroke="white" stroke-width="3" opacity="0.9"/>
+    <line x1="0" y1="-17" x2="-22" y2="3" stroke="white" stroke-width="3" stroke-linecap="round" opacity="0.9"/>
+    <circle cx="-22" cy="5" r="4.5" opacity="0.9"/>
+    <line x1="-24" y1="5" x2="-27" y2="18" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+    <line x1="-22" y1="5" x2="-22" y2="20" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+    <line x1="-20" y1="5" x2="-17" y2="18" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+  </g>
+  <text x="96" y="158" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="800" font-size="38" fill="white" letter-spacing="3" opacity="0.95">DC</text>
+</svg>
