@@ -35,7 +35,8 @@
       "Bash(curl -s https://deepclasssite.vercel.app/api/community)",
       "Bash(curl -s -L https://deepclasssite.vercel.app/login)",
       "WebFetch(domain:www.adiga.kr)",
-      "WebFetch(domain:www.saeisol.com)"
+      "WebFetch(domain:www.saeisol.com)",
+      "WebFetch(domain:www.data.go.kr)"
     ]
   }
 }

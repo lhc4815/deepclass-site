@@ -11,17 +11,15 @@ const categories = [
 ];
 
 const categoryColors: Record<string, string> = {
-  "수시": "text-blue-600", "정시": "text-rose-600", "논술": "text-purple-600",
-  "학종": "text-teal-600", "내신": "text-amber-600", "의대": "text-emerald-600",
+  "전체": "bg-gray-100 text-gray-600", "수시": "bg-blue-100 text-blue-700", "정시": "bg-rose-100 text-rose-700",
+  "논술": "bg-purple-100 text-purple-700", "학종": "bg-teal-100 text-teal-700", "내신": "bg-amber-100 text-amber-700", "의대": "bg-emerald-100 text-emerald-700",
 };
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const m = Math.floor(diff / 60000);
-  if (m < 1) return "방금 전";
-  if (m < 60) return `${m}분 전`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}시간 전`;
+  if (m < 1) return "방금 전"; if (m < 60) return `${m}분 전`;
+  const h = Math.floor(m / 60); if (h < 24) return `${h}시간 전`;
   return `${Math.floor(h / 24)}일 전`;
 }
 
@@ -64,10 +62,9 @@ export default function NewsPage() {
 
   return (
     <div className="max-w-[1200px] mx-auto space-y-3 animate-fade-in">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-[15px] font-bold flex items-center gap-1.5">
-          <Newspaper className="w-4 h-4 text-primary-600" />입시뉴스
+          입시뉴스
           <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded">LIVE</span>
         </h1>
         <div className="flex items-center gap-2">
@@ -82,7 +79,6 @@ export default function NewsPage() {
         </div>
       </div>
 
-      {/* Category Tabs */}
       <div className="flex items-center gap-1 border-b border-border pb-2">
         {categories.map((cat) => (
           <button key={cat.id} onClick={() => setActiveCategory(cat.id)}
@@ -94,63 +90,49 @@ export default function NewsPage() {
         ))}
       </div>
 
-      {/* News Table */}
-      <div className="bg-surface border border-border rounded-lg overflow-hidden">
-        {loading ? (
-          <div className="flex justify-center py-12"><Loader2 className="w-5 h-5 text-primary-600 animate-spin" /></div>
-        ) : (
-          <>
-            <div className="px-4 py-1.5 bg-surface-secondary border-b border-border text-[11px] text-muted-light">
-              총 {filteredNews.length}건
-            </div>
-            <table className="board-table">
-              <thead>
-                <tr>
-                  <th className="w-14">분류</th>
-                  <th className="td-title">제목</th>
-                  <th className="w-24">매체</th>
-                  <th className="w-14">소스</th>
-                  <th className="w-20">시간</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredNews.map((item) => (
-                  <tr key={item.id}>
-                    <td className="td-center">
-                      <span className={`text-[11px] font-semibold ${categoryColors[item.category] || "text-gray-600"}`}>{item.category}</span>
-                    </td>
-                    <td className="td-title">
-                      <div className="flex items-center gap-2.5">
-                        <div className="hidden sm:block w-16 h-11 flex-shrink-0 rounded overflow-hidden">
-                          <NewsImage articleUrl={item.link} alt={item.title} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <a href={item.link} target="_blank" rel="noopener noreferrer" className="hover:text-primary-600 hover:underline line-clamp-1">
-                            {item.title}
-                          </a>
-                          {item.description && <p className="text-[11px] text-muted-light line-clamp-1 mt-0.5">{item.description}</p>}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="td-center text-[11px] text-muted">{item.source}</td>
-                    <td className="td-center">
-                      <span className={`text-[10px] px-1 py-0.5 rounded ${item.provider === "naver" ? "bg-green-50 text-green-700" : "bg-orange-50 text-orange-700"}`}>
-                        {item.provider === "naver" ? "N" : "G"}
-                      </span>
-                    </td>
-                    <td className="td-center text-[11px] text-muted-light">{timeAgo(item.pubDate)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {filteredNews.length === 0 && (
-              <div className="text-center py-8 text-[13px] text-muted">
-                {searchQuery ? "검색 결과가 없습니다." : "뉴스가 없습니다."}
-              </div>
-            )}
-          </>
-        )}
-      </div>
+      {loading ? (
+        <div className="flex justify-center py-12"><Loader2 className="w-5 h-5 text-primary-600 animate-spin" /></div>
+      ) : (
+        <>
+          <p className="text-[11px] text-muted-light">총 {filteredNews.length}건</p>
+          <div className="space-y-2">
+            {filteredNews.map((item) => (
+              <a key={item.id} href={item.link} target="_blank" rel="noopener noreferrer"
+                className="flex gap-3 bg-surface border border-border rounded-lg p-3 hover:border-primary-300 transition-colors group">
+                {/* Thumbnail */}
+                <div className="hidden sm:block w-32 h-20 flex-shrink-0 rounded overflow-hidden bg-surface-secondary">
+                  <NewsImage articleUrl={item.link} alt={item.title} />
+                </div>
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className={`px-1.5 py-0.5 text-[10px] font-semibold rounded ${categoryColors[item.category] || categoryColors["전체"]}`}>
+                      {item.category}
+                    </span>
+                    <span className="text-[10px] text-muted-light">{item.source}</span>
+                    <span className={`text-[9px] px-1 py-0.5 rounded ${item.provider === "naver" ? "bg-green-50 text-green-700" : "bg-orange-50 text-orange-700"}`}>
+                      {item.provider === "naver" ? "네이버" : "구글"}
+                    </span>
+                  </div>
+                  <h3 className="text-[13px] font-semibold leading-snug group-hover:text-primary-600 transition-colors mb-1">
+                    {item.title}
+                  </h3>
+                  {item.description && (
+                    <p className="text-[11px] text-muted leading-relaxed line-clamp-2">{item.description}</p>
+                  )}
+                  <span className="text-[10px] text-muted-light flex items-center gap-0.5 mt-1.5">
+                    <Clock className="w-3 h-3" />{timeAgo(item.pubDate)}
+                  </span>
+                </div>
+                <ExternalLink className="w-3.5 h-3.5 text-muted-light opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 mt-1" />
+              </a>
+            ))}
+          </div>
+          {filteredNews.length === 0 && (
+            <div className="text-center py-8 text-[13px] text-muted">{searchQuery ? "검색 결과가 없습니다." : "뉴스가 없습니다."}</div>
+          )}
+        </>
+      )}
     </div>
   );
 }

@@ -16,7 +16,7 @@ const siteCategories: SiteCategory[] = [
   ]},
   { id: "community", label: "입시 커뮤니티", icon: MessageSquare, sites: [
     { name: "오르비", url: "https://orbi.kr", description: "대한민국 대표 입시 커뮤니티", tags: ["커뮤니티", "수능"] },
-    { name: "수만휘", url: "https://www.sumanwhi.com", description: "수능 커뮤니티, 성적 분석, 배치표", tags: ["수능", "배치표"] },
+    { name: "수만휘", url: "https://www.sumanhui.kr", description: "수능 커뮤니티 기반, 기숙/스파르타 학원", tags: ["수능", "커뮤니티"] },
     { name: "네이버 카페 수만휘", url: "https://cafe.naver.com/suhui", description: "수능 관련 네이버 대표 카페", tags: ["카페", "수능"] },
     { name: "대치동 학부모 카페", url: "https://cafe.naver.com/daechidong1", description: "대치동 학부모 커뮤니티, 학원/입시 정보", tags: ["학부모", "대치동"] },
     { name: "맘스홀릭", url: "https://cafe.naver.com/momsholick", description: "학부모 대표 카페, 입시·교육 정보", tags: ["학부모", "교육"] },
@@ -44,9 +44,9 @@ const siteCategories: SiteCategory[] = [
   { id: "university", label: "주요 대학 입학처", icon: Building, sites: [
     { name: "서울대학교", url: "https://admission.snu.ac.kr", description: "서울대 입시 정보", tags: ["서울대"] },
     { name: "연세대학교", url: "https://admission.yonsei.ac.kr", description: "연세대 입시 정보", tags: ["연세대"] },
-    { name: "고려대학교", url: "https://admission.korea.ac.kr", description: "고려대 입시 정보", tags: ["고려대"] },
+    { name: "고려대학교", url: "https://oku.korea.ac.kr", description: "고려대 입시 정보", tags: ["고려대"] },
     { name: "성균관대학교", url: "https://admission.skku.edu", description: "성균관대 입시 정보", tags: ["성균관대"] },
-    { name: "한양대학교", url: "https://admission.hanyang.ac.kr", description: "한양대 입시 정보", tags: ["한양대"] },
+    { name: "한양대학교", url: "https://go.hanyang.ac.kr", description: "한양대 입시 정보", tags: ["한양대"] },
     { name: "중앙대학교", url: "https://admission.cau.ac.kr", description: "중앙대 입시 정보", tags: ["중앙대"] },
   ]},
 ];
