@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import https from "https";
 
 const NEIS_API_KEY = process.env.NEIS_API_KEY;
-const agent = new https.Agent({ rejectUnauthorized: false });
 
 // 교육청 코드
 const OFFICE_CODES: Record<string, string> = {
@@ -13,19 +11,9 @@ const OFFICE_CODES: Record<string, string> = {
 };
 
 interface SchoolInfo {
-  code: string;
-  name: string;
-  engName: string;
-  kind: string;     // 고등학교, 중학교
-  region: string;
-  address: string;
-  phone: string;
-  homepage: string;
-  coedu: string;    // 남여공학, 남, 여
-  founded: string;
-  type: string;     // 일반고, 특목고, 자율고, 특성화고
-  dayNight: string;
-  publicPrivate: string; // 공립, 사립
+  code: string; name: string; engName: string; kind: string; region: string;
+  address: string; phone: string; homepage: string; coedu: string; founded: string;
+  type: string; dayNight: string; publicPrivate: string;
 }
 
 export async function GET(request: NextRequest) {
@@ -57,15 +45,15 @@ export async function GET(request: NextRequest) {
       url.searchParams.set("SCHUL_NM", search);
     }
 
+    // Vercel 호환: agent 없이 fetch 사용
     const res = await fetch(url.toString(), {
-      // @ts-expect-error
-      agent,
+      headers: { "Accept": "application/json" },
+      signal: AbortSignal.timeout(10000),
     });
 
     const data = await res.json();
 
     if (data.RESULT?.CODE === "INFO-200") {
-      // 검색 결과 없음
       return NextResponse.json({ success: true, data: [], total: 0, page, size });
     }
 
@@ -92,11 +80,7 @@ export async function GET(request: NextRequest) {
     }));
 
     return NextResponse.json({
-      success: true,
-      data: schools,
-      total,
-      page,
-      size,
+      success: true, data: schools, total, page, size,
     }, {
       headers: { "Cache-Control": "public, max-age=86400, s-maxage=86400" },
     });

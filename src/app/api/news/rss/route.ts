@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import https from "https";
 import { RSS_SOURCES, type NewsItem } from "@/lib/news-sources";
-
-const agent = new https.Agent({ rejectUnauthorized: false });
 
 /** 간단한 XML 태그에서 텍스트 추출 */
 function extractTag(xml: string, tag: string): string[] {
@@ -25,8 +22,6 @@ function stripHtml(str: string): string {
 
 async function fetchRssFeed(url: string): Promise<string> {
   const res = await fetch(url, {
-    // @ts-expect-error - Node.js fetch accepts agent
-    agent,
     headers: {
       "User-Agent":
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",

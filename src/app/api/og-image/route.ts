@@ -1,7 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import https from "https";
-
-const agent = new https.Agent({ rejectUnauthorized: false });
 
 /**
  * URL에서 og:image 메타 태그를 추출하는 API
@@ -18,8 +15,6 @@ export async function GET(request: NextRequest) {
     const timeout = setTimeout(() => controller.abort(), 5000);
 
     const res = await fetch(url, {
-      // @ts-expect-error - Node.js fetch accepts agent
-      agent: url.startsWith("https") ? agent : undefined,
       headers: {
         "User-Agent":
           "Mozilla/5.0 (compatible; DeepClassBot/1.0; +https://deepclass.site)",
