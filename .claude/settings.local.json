@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:thecodit.com)",
+      "Bash(npx create-next-app@latest:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)",
+      "WebSearch",
+      "WebFetch(domain:blog.thecodit.com)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(curl -s http://localhost:3000/api/news/naver?category=%EC%A0%84%EC%B2%B4\\\\&limit=3)",
+      "Bash(curl -s http://localhost:3000/api/news/rss?category=%EC%A0%84%EC%B2%B4\\\\&limit=3)",
+      "Bash(curl -s -L -H \"User-Agent: Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36\" \"https://news.google.com/rss/search?q=%EB%8C%80%ED%95%99%EC%9E%85%EC%8B%9C&hl=ko&gl=KR&ceid=KR:ko\")",
+      "Bash(curl -v -L \"https://news.google.com/rss/search?q=입시&hl=ko&gl=KR&ceid=KR:ko\")",
+      "Bash(curl -s -k -L \"https://news.google.com/rss/search?q=입시&hl=ko&gl=KR&ceid=KR:ko\")",
+      "Bash(curl -s -k -L \"https://news.google.com/rss/search?q=%EB%8C%80%ED%95%99%EC%9E%85%EC%8B%9C&hl=ko&gl=KR&ceid=KR:ko\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f'RSS count: {d.get\\(\\\\\"count\\\\\",0\\)}'\\); [print\\(f'  - [{i[\\\\\"source\\\\\"]}] {i[\\\\\"title\\\\\"][:50]}'\\) for i in d.get\\('data',[]\\)[:3]]\")",
+      "Bash(node:*)",
+      "mcp__claude_ai_Notion__notion-create-pages",
+      "Bash(curl -s http://localhost:3000/api/youtube?category=%EC%A0%84%EC%B2%B4\\\\&limit=2)",
+      "mcp__claude_ai_Notion__notion-fetch",
+      "Bash(git init:*)",
+      "Bash(git branch:*)",
+      "mcp__claude_ai_Notion__notion-update-page",
+      "Bash(gh auth:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(gh api:*)",
+      "Bash(git config:*)"
+    ]
+  }
+}
