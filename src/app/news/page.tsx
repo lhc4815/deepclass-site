@@ -3,6 +3,7 @@
 import { Newspaper, Clock, Search, Loader2, RefreshCw, ExternalLink } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import type { NewsItem } from "@/lib/news-sources";
+import NewsImage from "@/components/NewsImage";
 
 const categories = [
   { id: "전체", label: "전체" }, { id: "수시", label: "수시" }, { id: "정시", label: "정시" },
@@ -119,10 +120,17 @@ export default function NewsPage() {
                       <span className={`text-[11px] font-semibold ${categoryColors[item.category] || "text-gray-600"}`}>{item.category}</span>
                     </td>
                     <td className="td-title">
-                      <a href={item.link} target="_blank" rel="noopener noreferrer" className="hover:text-primary-600 hover:underline line-clamp-1">
-                        {item.title}
-                      </a>
-                      {item.description && <p className="text-[11px] text-muted-light line-clamp-1 mt-0.5">{item.description}</p>}
+                      <div className="flex items-center gap-2.5">
+                        <div className="hidden sm:block w-16 h-11 flex-shrink-0 rounded overflow-hidden">
+                          <NewsImage articleUrl={item.link} alt={item.title} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <a href={item.link} target="_blank" rel="noopener noreferrer" className="hover:text-primary-600 hover:underline line-clamp-1">
+                            {item.title}
+                          </a>
+                          {item.description && <p className="text-[11px] text-muted-light line-clamp-1 mt-0.5">{item.description}</p>}
+                        </div>
+                      </div>
                     </td>
                     <td className="td-center text-[11px] text-muted">{item.source}</td>
                     <td className="td-center">

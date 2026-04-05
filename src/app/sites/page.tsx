@@ -31,7 +31,7 @@ const siteCategories: SiteCategory[] = [
   { id: "lecture", label: "인터넷 강의", icon: MonitorPlay, sites: [
     { name: "EBSi", url: "https://www.ebsi.co.kr", description: "무료 수능 강의 (전과목)", tags: ["무료", "수능"] },
     { name: "메가스터디", url: "https://www.megastudy.net", description: "국내 최대 수능 인강", tags: ["수능", "유료"] },
-    { name: "대성마이맥", url: "https://www.mimacstudy.com", description: "대성학원 온라인 인강", tags: ["수능", "유료"] },
+    { name: "대성마이맥", url: "https://www.mimacstudy.com", description: "대성학원 계열 온라인 인강", tags: ["수능", "유료"] },
     { name: "이투스", url: "https://www.etoos.com", description: "수능·내신 인강, 모의고사", tags: ["수능", "모의고사"] },
     { name: "스카이에듀", url: "https://www.skyedu.com", description: "하늘교육 온라인 강의", tags: ["수능", "유료"] },
   ]},
@@ -71,7 +71,6 @@ export default function SitesPage() {
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="flex items-center gap-1 border-b border-border pb-2">
         <button onClick={() => setActiveCat("all")} className={`px-3 py-1 rounded text-[12px] font-medium ${activeCat === "all" ? "bg-primary-600 text-white" : "text-muted hover:bg-surface-secondary"}`}>전체</button>
         {siteCategories.map((c) => (
@@ -82,44 +81,28 @@ export default function SitesPage() {
         ))}
       </div>
 
-      {/* Site Lists */}
       {searched.map((cat) => (
-        <div key={cat.id} className="bg-surface border border-border rounded-lg overflow-hidden">
-          <div className="px-4 py-2 border-b border-border bg-surface-secondary flex items-center gap-1.5">
-            <cat.icon className="w-3.5 h-3.5 text-primary-600" />
-            <h2 className="text-[12px] font-bold">{cat.label}</h2>
-            <span className="text-[10px] text-muted-light ml-1">{cat.sites.length}개</span>
+        <div key={cat.id}>
+          <div className="flex items-center gap-1.5 mb-2">
+            <cat.icon className="w-4 h-4 text-primary-600" />
+            <h2 className="text-[13px] font-bold">{cat.label}</h2>
+            <span className="text-[10px] text-muted-light">{cat.sites.length}개</span>
           </div>
-          <table className="board-table">
-            <thead>
-              <tr>
-                <th className="td-title">사이트명</th>
-                <th className="td-title">설명</th>
-                <th className="w-20">태그</th>
-                <th className="w-12">링크</th>
-              </tr>
-            </thead>
-            <tbody>
-              {cat.sites.map((s) => (
-                <tr key={s.url}>
-                  <td className="td-title font-semibold">
-                    <a href={s.url} target="_blank" rel="noopener noreferrer" className="hover:text-primary-600 hover:underline">{s.name}</a>
-                  </td>
-                  <td className="text-[12px] text-muted">{s.description}</td>
-                  <td className="td-center">
-                    <div className="flex flex-wrap gap-0.5 justify-center">
-                      {s.tags.map((t) => <span key={t} className="px-1 py-0.5 bg-surface-secondary text-[9px] text-muted-light rounded">{t}</span>)}
-                    </div>
-                  </td>
-                  <td className="td-center">
-                    <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:text-primary-700">
-                      <ExternalLink className="w-3.5 h-3.5 inline" />
-                    </a>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mb-4">
+            {cat.sites.map((s) => (
+              <a key={s.url} href={s.url} target="_blank" rel="noopener noreferrer"
+                className="bg-surface border border-border rounded-lg p-3 hover:border-primary-300 transition-colors group">
+                <div className="flex items-start justify-between mb-1">
+                  <h3 className="text-[13px] font-semibold group-hover:text-primary-600 transition-colors">{s.name}</h3>
+                  <ExternalLink className="w-3 h-3 text-muted-light opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 mt-0.5" />
+                </div>
+                <p className="text-[11px] text-muted leading-relaxed mb-2">{s.description}</p>
+                <div className="flex flex-wrap gap-1">
+                  {s.tags.map((t) => <span key={t} className="px-1.5 py-0.5 bg-surface-secondary text-[9px] text-muted-light rounded">{t}</span>)}
+                </div>
+              </a>
+            ))}
+          </div>
         </div>
       ))}
     </div>
