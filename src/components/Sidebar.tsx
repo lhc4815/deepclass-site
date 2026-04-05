@@ -31,7 +31,7 @@ const menuItems = [
     icon: Newspaper,
   },
   {
-    label: "입시정보",
+    label: "입시영상",
     href: "/info",
     icon: BookOpen,
   },
@@ -48,7 +48,7 @@ const menuItems = [
     badge: "NEW",
   },
   {
-    label: "입시사이트",
+    label: "입시정보",
     href: "/sites",
     icon: Globe,
   },

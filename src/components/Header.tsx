@@ -10,10 +10,10 @@ import type { User as SupabaseUser } from "@supabase/supabase-js";
 const pageTitles: Record<string, { title: string; description: string }> = {
   "/": { title: "홈", description: "입시 정보를 한눈에 확인하세요" },
   "/news": { title: "입시뉴스", description: "최신 입시 뉴스와 기사" },
-  "/info": { title: "입시정보", description: "영상, 일정, 자료 모음" },
+  "/info": { title: "입시영상", description: "입시 관련 영상과 일정" },
   "/chat": { title: "입시Chat", description: "AI 입시 상담" },
   "/community": { title: "커뮤니티", description: "입시 이야기를 나눠보세요" },
-  "/sites": { title: "입시사이트", description: "유용한 입시 사이트 모음" },
+  "/sites": { title: "입시정보", description: "유용한 입시 사이트 모음" },
   "/academy": { title: "학원정보", description: "학원·인강·컨설팅 정보" },
   "/admin": { title: "관리자", description: "콘텐츠 및 사이트 관리" },
 };
