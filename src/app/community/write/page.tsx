@@ -6,14 +6,9 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 const boards = [
-  { id: "susi", label: "수시" },
-  { id: "jeongsi", label: "정시" },
-  { id: "nonseul", label: "논술" },
-  { id: "hakjong", label: "학종" },
-  { id: "student", label: "학생게시판" },
-  { id: "parent", label: "학부모게시판" },
-  { id: "free", label: "자유게시판" },
-  { id: "qna", label: "질문&답변" },
+  { id: "susi", label: "수시" }, { id: "jeongsi", label: "정시" }, { id: "nonseul", label: "논술" },
+  { id: "hakjong", label: "학종" }, { id: "student", label: "학생게시판" }, { id: "parent", label: "학부모게시판" },
+  { id: "free", label: "자유게시판" }, { id: "qna", label: "질문&답변" },
 ];
 
 export default function WritePage() {
@@ -27,94 +22,51 @@ export default function WritePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !content.trim()) return;
-
-    setLoading(true);
-    setError("");
-
+    setLoading(true); setError("");
     const res = await fetch("/api/community", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title, content, board }),
     });
-
     const data = await res.json();
-
-    if (data.success) {
-      router.push(`/community/${data.data.id}`);
-    } else {
-      setError(data.error || "글 작성에 실패했습니다.");
-      if (data.error?.includes("로그인")) {
-        router.push("/login");
-      }
-    }
+    if (data.success) router.push(`/community/${data.data.id}`);
+    else { setError(data.error || "글 작성 실패"); if (data.error?.includes("로그인")) router.push("/login"); }
     setLoading(false);
   };
 
   return (
-    <div className="max-w-3xl mx-auto animate-fade-in">
-      <Link href="/community" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground transition-colors mb-4">
-        <ArrowLeft className="w-4 h-4" />커뮤니티로 돌아가기
+    <div className="max-w-[800px] mx-auto animate-fade-in">
+      <Link href="/community" className="inline-flex items-center gap-1 text-[12px] text-muted hover:text-foreground mb-3">
+        <ArrowLeft className="w-3.5 h-3.5" />목록으로
       </Link>
 
-      <div className="bg-surface rounded-2xl border border-border p-6">
-        <h1 className="text-lg font-bold mb-5">글쓰기</h1>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Board select */}
-          <div>
-            <label className="text-xs font-semibold text-muted mb-1.5 block">게시판 선택</label>
-            <select
-              value={board}
-              onChange={(e) => setBoard(e.target.value)}
-              className="w-full px-4 py-2.5 bg-background border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-300"
-            >
-              {boards.map((b) => (
-                <option key={b.id} value={b.id}>{b.label}</option>
-              ))}
+      <div className="bg-surface border border-border rounded-lg">
+        <div className="px-4 py-2.5 border-b-2 border-foreground bg-surface-secondary">
+          <h1 className="text-[14px] font-bold">글쓰기</h1>
+        </div>
+        <form onSubmit={handleSubmit} className="p-4 space-y-3">
+          <div className="flex items-center gap-3">
+            <label className="text-[12px] font-semibold text-muted w-16">게시판</label>
+            <select value={board} onChange={(e) => setBoard(e.target.value)}
+              className="flex-1 px-3 py-[6px] bg-surface border border-border rounded text-[13px] focus:outline-none focus:border-primary-400">
+              {boards.map((b) => <option key={b.id} value={b.id}>{b.label}</option>)}
             </select>
           </div>
-
-          {/* Title */}
-          <div>
-            <label className="text-xs font-semibold text-muted mb-1.5 block">제목</label>
-            <input
-              type="text"
-              placeholder="제목을 입력하세요"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-              className="w-full px-4 py-2.5 bg-background border border-border rounded-xl text-sm placeholder:text-muted-light focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-300"
-            />
+          <div className="flex items-center gap-3">
+            <label className="text-[12px] font-semibold text-muted w-16">제목</label>
+            <input type="text" placeholder="제목을 입력하세요" value={title} onChange={(e) => setTitle(e.target.value)} required
+              className="flex-1 px-3 py-[6px] bg-surface border border-border rounded text-[13px] placeholder:text-muted-light focus:outline-none focus:border-primary-400" />
           </div>
-
-          {/* Content */}
           <div>
-            <label className="text-xs font-semibold text-muted mb-1.5 block">내용</label>
-            <textarea
-              placeholder="내용을 입력하세요"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              required
-              rows={12}
-              className="w-full px-4 py-3 bg-background border border-border rounded-xl text-sm placeholder:text-muted-light focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-300 resize-none leading-relaxed"
-            />
+            <label className="text-[12px] font-semibold text-muted mb-1 block">내용</label>
+            <textarea placeholder="내용을 입력하세요" value={content} onChange={(e) => setContent(e.target.value)} required rows={14}
+              className="w-full px-3 py-2 bg-surface border border-border rounded text-[13px] placeholder:text-muted-light focus:outline-none focus:border-primary-400 resize-none leading-relaxed" />
           </div>
-
-          {error && (
-            <p className="text-xs text-red-500 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>
-          )}
-
-          <div className="flex justify-end gap-3">
-            <Link href="/community" className="px-5 py-2.5 bg-surface-secondary border border-border rounded-xl text-sm font-medium text-muted hover:bg-background transition-colors">
-              취소
-            </Link>
-            <button
-              type="submit"
-              disabled={loading || !title.trim() || !content.trim()}
-              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl text-sm font-semibold hover:from-primary-700 hover:to-primary-800 transition-all shadow-lg shadow-primary-600/20 disabled:opacity-50"
-            >
-              <Send className="w-4 h-4" />
-              {loading ? "게시 중..." : "게시하기"}
+          {error && <p className="text-[12px] text-rose-500 bg-rose-50 border border-rose-200 rounded px-3 py-1.5">{error}</p>}
+          <div className="flex justify-end gap-2 pt-1">
+            <Link href="/community" className="px-4 py-[6px] bg-surface-secondary border border-border rounded text-[12px] font-medium text-muted">취소</Link>
+            <button type="submit" disabled={loading || !title.trim() || !content.trim()}
+              className="flex items-center gap-1.5 px-4 py-[6px] bg-primary-600 text-white rounded text-[12px] font-semibold hover:bg-primary-700 disabled:opacity-50">
+              <Send className="w-3.5 h-3.5" />{loading ? "게시 중..." : "게시하기"}
             </button>
           </div>
         </form>
