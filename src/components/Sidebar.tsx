@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation";
 import {
   Newspaper,
   BookOpen,
+  Play,
   MessageCircle,
   MessageSquare,
   School,
-  Globe,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -33,7 +33,7 @@ const menuItems = [
   {
     label: "입시영상",
     href: "/info",
-    icon: BookOpen,
+    icon: Play,
   },
   {
     label: "입시Chat",
@@ -50,7 +50,7 @@ const menuItems = [
   {
     label: "입시정보",
     href: "/sites",
-    icon: Globe,
+    icon: BookOpen,
   },
   {
     label: "학원정보",
