@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
+import { getAllSchedules, getDday, type ScheduleItem } from "@/lib/schedule-data";
 
 const tabs = [
   { id: "videos", label: "영상", icon: Play },
@@ -41,26 +42,23 @@ interface YouTubeVideo {
   videoUrl: string;
 }
 
-const mockSchedule = [
-  { date: "2026.04.15", title: "2027학년도 대입전형 시행계획 발표", type: "발표", important: true },
-  { date: "2026.05.01", title: "수시 원서접수 시작 (일부 대학)", type: "접수", important: false },
-  { date: "2026.05.15", title: "대학별 수시 모집요강 발표", type: "발표", important: true },
-  { date: "2026.06.01", title: "대학별 모의논술 일정 공개", type: "논술", important: false },
-  { date: "2026.06.15", title: "6월 수능 모의평가", type: "수능", important: true },
-  { date: "2026.09.01", title: "수시 원서접수 시작", type: "접수", important: true },
-  { date: "2026.09.15", title: "수시 원서접수 마감", type: "접수", important: true },
-  { date: "2026.09.20", title: "9월 수능 모의평가", type: "수능", important: true },
-  { date: "2026.11.01", title: "논술시험 시작 (주요 대학)", type: "논술", important: false },
-  { date: "2026.11.20", title: "대학수학능��시험", type: "수능", important: true },
-  { date: "2026.12.09", title: "수능 성적 통지", type: "수능", important: true },
-  { date: "2026.12.30", title: "정시 원서접수 시작", type: "접수", important: true },
-];
+const scheduleData = getAllSchedules();
 
 const typeColors: Record<string, string> = {
-  "발표": "bg-blue-50 text-blue-600 border-blue-100",
-  "접수": "bg-emerald-50 text-emerald-600 border-emerald-100",
-  "논술": "bg-purple-50 text-purple-600 border-purple-100",
   "수능": "bg-rose-50 text-rose-600 border-rose-100",
+  "원서접수": "bg-emerald-50 text-emerald-600 border-emerald-100",
+  "전형": "bg-purple-50 text-purple-600 border-purple-100",
+  "합격발표": "bg-amber-50 text-amber-600 border-amber-100",
+  "등록": "bg-blue-50 text-blue-600 border-blue-100",
+  "발표": "bg-sky-50 text-sky-600 border-sky-100",
+  "모집": "bg-orange-50 text-orange-600 border-orange-100",
+  "기타": "bg-gray-50 text-gray-600 border-gray-100",
+};
+
+const categoryColors: Record<string, string> = {
+  "공통": "bg-gray-100 text-gray-700",
+  "수시": "bg-blue-100 text-blue-700",
+  "정시": "bg-rose-100 text-rose-700",
 };
 
 function timeAgo(dateStr: string): string {
@@ -267,43 +265,65 @@ export default function InfoPage() {
       {/* Schedule Tab */}
       {activeTab === "schedule" && (
         <div className="bg-surface rounded-2xl border border-border overflow-hidden">
+          <div className="px-5 py-3 border-b border-border bg-surface-secondary/50 flex items-center gap-4 text-[11px]">
+            <span className="text-muted-light font-medium">2027학년도 대입 일정</span>
+            <span className="text-muted-light">|</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400" />공통</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-600" />수시</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-rose-500" />정시</span>
+          </div>
           <div className="grid grid-cols-1 divide-y divide-border-light">
-            {mockSchedule.map((item, i) => {
-              const parts = item.date.split(".");
+            {scheduleData.map((item) => {
+              const d = new Date(item.date);
+              const month = String(d.getMonth() + 1);
+              const day = String(d.getDate()).padStart(2, "0");
+              const dday = getDday(item.date);
+              const isPast = new Date(item.date) < new Date();
+
               return (
                 <div
-                  key={i}
-                  className={`flex items-center gap-5 px-5 py-4 hover:bg-surface-hover transition-all duration-200 cursor-pointer group ${
-                    item.important ? "" : "opacity-75 hover:opacity-100"
+                  key={item.id}
+                  className={`flex items-center gap-5 px-5 py-4 hover:bg-surface-hover transition-all duration-200 group ${
+                    isPast ? "opacity-50" : item.important ? "" : "opacity-80 hover:opacity-100"
                   }`}
                 >
                   <div className={`w-14 h-14 rounded-xl flex flex-col items-center justify-center flex-shrink-0 border ${
-                    item.important
+                    item.important && !isPast
                       ? "bg-gradient-to-br from-primary-50 to-primary-100 border-primary-100"
                       : "bg-surface-secondary border-border"
                   }`}>
-                    <span className={`text-[10px] font-bold leading-none ${item.important ? "text-primary-400" : "text-muted-light"}`}>
-                      {parts[1]}월
+                    <span className={`text-[10px] font-bold leading-none ${item.important && !isPast ? "text-primary-400" : "text-muted-light"}`}>
+                      {month}월
                     </span>
-                    <span className={`text-lg font-extrabold leading-tight ${item.important ? "text-primary-700" : "text-muted"}`}>
-                      {parts[2]}
+                    <span className={`text-lg font-extrabold leading-tight ${item.important && !isPast ? "text-primary-700" : "text-muted"}`}>
+                      {day}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      {item.important && (
+                      {item.important && !isPast && (
                         <span className="w-1.5 h-1.5 bg-primary-500 rounded-full flex-shrink-0" />
                       )}
+                      <span className={`px-1.5 py-0.5 text-[9px] font-bold rounded ${categoryColors[item.category] || ""}`}>
+                        {item.category}
+                      </span>
                       <h3 className="text-[13px] font-semibold truncate group-hover:text-primary-600 transition-colors">
                         {item.title}
                       </h3>
                     </div>
-                    <p className="text-[11px] text-muted-light">{item.date}</p>
+                    <p className="text-[11px] text-muted-light">
+                      {item.date}{item.endDate ? ` ~ ${item.endDate}` : ""}
+                      {item.description && ` · ${item.description}`}
+                    </p>
                   </div>
-                  <span className={`px-2.5 py-1 text-[10px] font-semibold rounded-lg border flex-shrink-0 ${typeColors[item.type] || ""}`}>
+                  <span className={`px-2.5 py-1 text-[10px] font-semibold rounded-lg border flex-shrink-0 ${typeColors[item.type] || typeColors["기타"]}`}>
                     {item.type}
                   </span>
-                  <ChevronRight className="w-4 h-4 text-muted-light opacity-0 group-hover:opacity-100 transition-all" />
+                  {!isPast && (
+                    <span className="text-[11px] font-bold text-primary-600 bg-primary-50 px-2 py-0.5 rounded-md flex-shrink-0 min-w-[50px] text-center">
+                      {dday}
+                    </span>
+                  )}
                 </div>
               );
             })}

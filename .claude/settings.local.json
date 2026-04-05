@@ -31,7 +31,11 @@
       "Bash(gh repo:*)",
       "Bash(git push:*)",
       "Bash(npx vercel:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(curl -s https://deepclasssite.vercel.app/api/community)",
+      "Bash(curl -s -L https://deepclasssite.vercel.app/login)",
+      "WebFetch(domain:www.adiga.kr)",
+      "WebFetch(domain:www.saeisol.com)"
     ]
   }
 }

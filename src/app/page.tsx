@@ -23,6 +23,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { NewsItem } from "@/lib/news-sources";
 import NewsImage from "@/components/NewsImage";
+import { getUpcomingSchedules, getDday } from "@/lib/schedule-data";
 
 interface YouTubeVideo {
   id: string;
@@ -43,12 +44,16 @@ const categoryColors: Record<string, string> = {
   "의대": "bg-emerald-50 text-emerald-600 border-emerald-100",
 };
 
-const upcomingSchedule = [
-  { month: "4", day: "15", title: "대입전형 시행계획 발표", type: "발표", dday: "D-10" },
-  { month: "5", day: "01", title: "수시 원서접수 시작", type: "접수", dday: "D-26" },
-  { month: "6", day: "15", title: "수능 모의평가", type: "수능", dday: "D-71" },
-  { month: "9", day: "01", title: "수시 원서접수", type: "접수", dday: "D-149" },
-];
+const upcomingSchedule = getUpcomingSchedules(5).map((s) => {
+  const d = new Date(s.date);
+  return {
+    month: String(d.getMonth() + 1),
+    day: String(d.getDate()).padStart(2, "0"),
+    title: s.title,
+    type: s.type,
+    dday: getDday(s.date),
+  };
+});
 
 function timeAgo(dateStr: string): string {
   const now = new Date();
