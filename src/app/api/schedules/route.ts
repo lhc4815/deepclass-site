@@ -35,7 +35,17 @@ export async function GET(request: NextRequest) {
   const { data, error } = await query.limit(limit);
 
   if (error) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    // DB 테이블이 없으면 하드코딩 데이터 폴백
+    const { getAllSchedules } = await import("@/lib/schedule-data");
+    const fallback = getAllSchedules().map((s, i) => ({
+      id: i + 1, date: s.date, end_date: s.endDate || null,
+      title: s.title, type: s.type, category: s.category,
+      important: s.important, description: s.description || null,
+    }));
+    const filtered = upcoming
+      ? fallback.filter((s) => s.date >= new Date().toISOString().split("T")[0])
+      : fallback;
+    return NextResponse.json({ success: true, data: filtered.slice(0, limit) });
   }
 
   return NextResponse.json({ success: true, data: data || [] });
