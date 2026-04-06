@@ -13,6 +13,7 @@ const pageTitles: Record<string, string> = {
   "/info": "입시영상",
   "/chat": "입시Chat",
   "/community": "커뮤니티",
+  "/mypage": "나의 입시정보",
   "/sites": "입시정보",
   "/universities": "대학정보",
   "/schools": "학교정보",

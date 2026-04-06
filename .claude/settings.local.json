@@ -52,7 +52,8 @@
       "Bash(git commit:*)",
       "WebFetch(domain:www.youtube.com)",
       "Bash(sed -i 's/categories\\\\.map/NEWS_CATEGORIES.map/g' src/app/news/page.tsx)",
-      "Bash(sed -i 's/categoryColors\\\\[/NEWS_CATEGORY_COLORS[/g' src/app/news/page.tsx)"
+      "Bash(sed -i 's/categoryColors\\\\[/NEWS_CATEGORY_COLORS[/g' src/app/news/page.tsx)",
+      "Bash(npm ls:*)"
     ]
   }
 }

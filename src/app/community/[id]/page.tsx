@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowLeft, ThumbsUp, MessageSquare, Clock, Eye, Trash2, Send, User } from "lucide-react";
+import ScrapButton from "@/components/ScrapButton";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
@@ -111,6 +112,7 @@ export default function PostDetailPage() {
             <ThumbsUp className={`w-3.5 h-3.5 ${liked ? "fill-primary-600" : ""}`} />
             추천 {likesCount > 0 && likesCount}
           </button>
+          <ScrapButton itemType="post" itemId={String(post.id)} title={post.title} summary={post.content.slice(0, 200)} size="md" />
         </div>
       </div>
 

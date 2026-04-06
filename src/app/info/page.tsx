@@ -1,8 +1,9 @@
 "use client";
 
-import { Play, Calendar, FileText, Eye, Clock, Loader2, Search, X } from "lucide-react";
+import { Play, Calendar, FileText, Eye, Clock, Loader2, Search, X, Bookmark, BookmarkCheck, FileText as Script } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { getDday } from "@/lib/schedule-data";
+import ScrapButton from "@/components/ScrapButton";
 
 interface YouTubeVideo { id: string; title: string; description: string; thumbnail: string; channelTitle: string; publishedAt: string; videoUrl: string; }
 interface ScheduleItem { id: number; date: string; end_date: string | null; title: string; type: string; category: string; important: boolean; description: string | null; }
@@ -205,14 +206,55 @@ export default function InfoPage() {
             </div>
             <div className="mt-2 bg-surface rounded-lg border border-border p-3">
               <h3 className="text-[13px] font-semibold">{selectedVideo.title}</h3>
-              <div className="flex items-center justify-between mt-1">
+              <div className="flex items-center justify-between mt-2">
                 <p className="text-[11px] text-muted">{selectedVideo.channelTitle}</p>
-                <a href={selectedVideo.videoUrl} target="_blank" rel="noopener noreferrer" className="text-[11px] text-red-500 hover:underline flex items-center gap-0.5">
-                  <Play className="w-3 h-3" />YouTube에서 보기
-                </a>
+                <div className="flex items-center gap-3">
+                  <ScrapButton itemType="video" itemId={selectedVideo.id} title={selectedVideo.title} url={selectedVideo.videoUrl} thumbnail={selectedVideo.thumbnail} source={selectedVideo.channelTitle} size="md" />
+                  <TranscriptButton videoId={selectedVideo.id} />
+                  <a href={selectedVideo.videoUrl} target="_blank" rel="noopener noreferrer" className="text-[11px] text-red-500 hover:underline flex items-center gap-0.5">
+                    <Play className="w-3 h-3" />YouTube
+                  </a>
+                </div>
               </div>
             </div>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TranscriptButton({ videoId }: { videoId: string }) {
+  const [show, setShow] = useState(false);
+  const [transcript, setTranscript] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchTranscript = async () => {
+    if (transcript) { setShow(!show); return; }
+    setLoading(true); setError(null);
+    const res = await fetch(`/api/youtube/transcript?v=${videoId}`);
+    const data = await res.json();
+    if (data.success) { setTranscript(data.summary); setShow(true); }
+    else setError(data.error || "자막을 가져올 수 없습니다.");
+    setLoading(false);
+  };
+
+  return (
+    <div className="relative">
+      <button onClick={fetchTranscript} disabled={loading}
+        className="text-[11px] text-muted hover:text-primary-600 flex items-center gap-0.5 transition-colors">
+        {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <FileText className="w-3 h-3" />}
+        자막요약
+      </button>
+      {error && <p className="absolute top-full mt-1 right-0 bg-rose-50 text-rose-600 text-[10px] px-2 py-1 rounded border border-rose-200 whitespace-nowrap z-10">{error}</p>}
+      {show && transcript && (
+        <div className="absolute top-full mt-1 right-0 w-80 max-h-48 overflow-y-auto bg-surface border border-border rounded-lg shadow-lg p-3 z-10">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[11px] font-semibold">자막 요약</span>
+            <button onClick={() => setShow(false)} className="text-muted-light hover:text-foreground"><X className="w-3 h-3" /></button>
+          </div>
+          <p className="text-[11px] text-muted leading-relaxed">{transcript}</p>
         </div>
       )}
     </div>

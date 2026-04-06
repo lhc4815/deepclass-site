@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import type { NewsItem } from "@/lib/news-sources";
 import NewsImage from "@/components/NewsImage";
 import { NEWS_CATEGORIES, NEWS_CATEGORY_COLORS } from "@/lib/categories";
+import ScrapButton from "@/components/ScrapButton";
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -144,7 +145,9 @@ export default function NewsPage() {
                     <Clock className="w-3 h-3" />{timeAgo(item.pubDate)}
                   </span>
                 </div>
-                <ExternalLink className="w-3.5 h-3.5 text-muted-light opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 mt-1" />
+                <div className="flex flex-col items-center gap-1 flex-shrink-0 mt-1">
+                  <ScrapButton itemType="news" itemId={item.id} title={item.title} url={item.link} source={item.source} summary={item.description} />
+                </div>
               </a>
             ))}
           </div>
