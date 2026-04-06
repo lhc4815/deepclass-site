@@ -54,7 +54,10 @@ export default function InfoPage() {
         if (pageToken) setVideos((prev) => [...prev, ...(data.data || [])]);
         else setVideos(data.data || []);
         setNextPageToken(data.nextPageToken || null);
-      } else setError(data.error);
+      } else {
+        if (data.quotaExceeded) setError("YouTube API 일일 할당량 초과. 잠시 후 자동 복구됩니다.");
+        else setError(data.error);
+      }
     } catch { setError("오류 발생"); } finally { setLoading(false); setLoadingMore(false); }
   }, []);
 

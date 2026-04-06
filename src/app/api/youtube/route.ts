@@ -22,12 +22,13 @@ const SEARCH_QUERIES: Record<string, string> = {
   "대학탐방": "대학교 캠퍼스 투어",
 };
 
+// 메모리 캐시 (6시간) — 할당량 절약
+const cache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL = 6 * 3600 * 1000; // 6시간
+
 export async function GET(request: NextRequest) {
   if (!YOUTUBE_API_KEY) {
-    return NextResponse.json({
-      success: false,
-      error: "YouTube API 키가 설정되지 않았습니다.",
-    });
+    return NextResponse.json({ success: false, error: "YouTube API 키가 설정되지 않았습니다." });
   }
 
   const { searchParams } = new URL(request.url);
@@ -35,6 +36,15 @@ export async function GET(request: NextRequest) {
   const limit = Math.min(Number(searchParams.get("limit")) || 12, 24);
   const query = searchParams.get("q") || SEARCH_QUERIES[category] || SEARCH_QUERIES["전체"];
   const pageToken = searchParams.get("pageToken") || "";
+
+  // 캐시 확인
+  const cacheKey = `${query}:${limit}:${pageToken}`;
+  const cached = cache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return NextResponse.json(cached.data, {
+      headers: { "Cache-Control": "public, max-age=21600, s-maxage=21600" },
+    });
+  }
 
   try {
     const url = new URL("https://www.googleapis.com/youtube/v3/search");
@@ -51,7 +61,23 @@ export async function GET(request: NextRequest) {
     const res = await fetch(url.toString());
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
-      throw new Error(errData?.error?.message || `YouTube API error: ${res.status}`);
+      const errMsg = errData?.error?.message || `YouTube API error: ${res.status}`;
+
+      // 할당량 초과 시 캐시된 데이터라도 반환
+      if (errMsg.includes("quota")) {
+        // 아무 캐시라도 있으면 반환
+        for (const [key, val] of cache) {
+          if (key.startsWith(query.slice(0, 5))) {
+            return NextResponse.json({ ...val.data, quotaExceeded: true });
+          }
+        }
+        return NextResponse.json({
+          success: false,
+          error: "YouTube API 일일 할당량이 초과되었습니다. 내일 자동으로 리셋됩니다.",
+          quotaExceeded: true,
+        });
+      }
+      throw new Error(errMsg);
     }
 
     const data = await res.json();
@@ -66,18 +92,20 @@ export async function GET(request: NextRequest) {
       videoUrl: `https://www.youtube.com/watch?v=${item.id.videoId}`,
     }));
 
-    return NextResponse.json({
+    const result = {
       success: true,
       count: videos.length,
       data: videos,
       nextPageToken: data.nextPageToken || null,
-    }, {
-      headers: {
-        "Cache-Control": "public, max-age=3600, s-maxage=3600",
-      },
+    };
+
+    // 캐시 저장
+    cache.set(cacheKey, { data: result, timestamp: Date.now() });
+
+    return NextResponse.json(result, {
+      headers: { "Cache-Control": "public, max-age=21600, s-maxage=21600" },
     });
   } catch (error: any) {
-    console.error("YouTube API error:", error);
     return NextResponse.json(
       { success: false, error: error.message || "YouTube API 오류" },
       { status: 500 }
