@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import https from "https";
 
 const NEIS_API_KEY = process.env.NEIS_API_KEY;
 
@@ -9,11 +10,21 @@ const OFFICE_CODES: Record<string, string> = {
   "경남": "S10", "제주": "T10",
 };
 
-interface SchoolInfo {
-  code: string; name: string; engName: string; kind: string; region: string;
-  address: string; phone: string; homepage: string; coedu: string; founded: string;
-  type: string; dayNight: string; publicPrivate: string;
+/** NEIS API를 https 모듈로 직접 호출 (SSL 인증서 우회) */
+function fetchNeis(apiUrl: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const req = https.get(apiUrl, { rejectUnauthorized: false }, (res) => {
+      let data = "";
+      res.on("data", (chunk) => (data += chunk));
+      res.on("end", () => resolve(data));
+    });
+    req.on("error", reject);
+    req.setTimeout(10000, () => { req.destroy(); reject(new Error("timeout")); });
+  });
 }
+
+// Force Node.js runtime (not Edge)
+export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   if (!NEIS_API_KEY) {
@@ -40,21 +51,9 @@ export async function GET(request: NextRequest) {
     url.searchParams.set("SCHUL_KND_SC_NM", kind);
     url.searchParams.set("pIndex", String(page));
     url.searchParams.set("pSize", String(size));
-    if (search) {
-      url.searchParams.set("SCHUL_NM", search);
-    }
+    if (search) url.searchParams.set("SCHUL_NM", search);
 
-    const res = await fetch(url.toString(), {
-      headers: { "Accept": "application/json" },
-    });
-
-    const text = await res.text();
-
-    // HTML 응답 체크 (SSL 에러 등)
-    if (text.startsWith("<!") || text.startsWith("<HTML")) {
-      return NextResponse.json({ success: false, error: "NEIS API SSL 연결 실패" }, { status: 502 });
-    }
-
+    const text = await fetchNeis(url.toString());
     const data = JSON.parse(text);
 
     if (data.RESULT?.CODE === "INFO-200") {
@@ -67,7 +66,7 @@ export async function GET(request: NextRequest) {
     }
 
     const total = info[0]?.head?.[0]?.list_total_count || 0;
-    const schools: SchoolInfo[] = info[1].row.map((r: any) => ({
+    const schools = info[1].row.map((r: any) => ({
       code: r.SD_SCHUL_CODE,
       name: r.SCHUL_NM,
       engName: r.ENG_SCHUL_NM || "",
@@ -83,9 +82,7 @@ export async function GET(request: NextRequest) {
       publicPrivate: r.FOND_SC_NM || "",
     }));
 
-    return NextResponse.json({
-      success: true, data: schools, total, page, size,
-    }, {
+    return NextResponse.json({ success: true, data: schools, total, page, size }, {
       headers: { "Cache-Control": "public, max-age=86400, s-maxage=86400" },
     });
   } catch (error: any) {
