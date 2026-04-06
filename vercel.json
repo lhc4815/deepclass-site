@@ -1,0 +1,8 @@
+{
+  "regions": ["icn1"],
+  "functions": {
+    "src/app/api/schools/route.ts": {
+      "maxDuration": 15
+    }
+  }
+}

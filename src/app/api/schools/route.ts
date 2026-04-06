@@ -55,16 +55,16 @@ export async function GET(request: NextRequest) {
 
     const text = await fetchNeis(url.toString());
 
-    // 디버그: 응답 내용 확인
+    // 디버그
     if (!text || text.length < 10) {
-      return NextResponse.json({ success: false, error: "NEIS 빈 응답", debug: text.slice(0, 100) }, { status: 502 });
+      return NextResponse.json({ success: false, error: "NEIS empty", debug: text.slice(0, 100), keyLen: NEIS_API_KEY?.length, keyStart: NEIS_API_KEY?.slice(0, 6) }, { status: 502 });
     }
 
     let data: any;
     try {
       data = JSON.parse(text);
     } catch {
-      return NextResponse.json({ success: false, error: "JSON 파싱 실패", debug: text.slice(0, 200) }, { status: 502 });
+      return NextResponse.json({ success: false, error: "JSON parse fail", debug: text.slice(0, 200), keyLen: NEIS_API_KEY?.length, keyStart: NEIS_API_KEY?.slice(0, 6) }, { status: 502 });
     }
 
     if (data.RESULT?.CODE === "INFO-200") {
