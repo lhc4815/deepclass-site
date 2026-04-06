@@ -436,12 +436,12 @@ function VideoManager() {
           <button onClick={collectRSS} disabled={rssCollecting}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 transition-all">
             <RefreshCw className={`w-3.5 h-3.5 ${rssCollecting ? "animate-spin" : ""}`} />
-            RSS 수집 (무제한)
+            전체 수집 (7개 카테고리)
           </button>
           <button onClick={collectAPI} disabled={collecting}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 transition-all">
             <Plus className={`w-3.5 h-3.5 ${collecting ? "animate-spin" : ""}`} />
-            API 수집 (할당량 사용)
+            커스텀 검색 수집
           </button>
         </div>
       </div>
@@ -451,8 +451,9 @@ function VideoManager() {
       )}
 
       <div className="bg-surface border border-border rounded-lg p-3 text-[11px] text-muted space-y-1">
-        <p><b>RSS 수집</b>: 입시 유튜브 채널에서 최신 영상 수집 (할당량 무제한, 매일 사용 권장)</p>
-        <p><b>API 수집</b>: YouTube API로 키워드 검색 수집 (하루 ~100회 제한, 필요시만 사용)</p>
+        <p><b>전체 수집</b>: 7개 카테고리 x 10개 = 약 70개 영상 수집 (하루 1회 권장, 할당량 700 사용)</p>
+        <p><b>커스텀 검색</b>: 원하는 검색어로 추가 수집 (1회 100 유닛, 필요시만 사용)</p>
+        <p>* 하루 총 10,000 유닛. 전체 수집 1회 = 700 유닛. 하루 14회까지 가능.</p>
       </div>
 
       {loading ? (
