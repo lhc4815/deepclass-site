@@ -48,7 +48,8 @@
       "Bash(curl -s -k \"https://www.career.go.kr/cnet/openapi/getOpenApi?apiKey=04e073708d22d6790cb68542d133bc3312f21bf3f5563ca0c612d16f48d12948&svcType=api&svcCode=SCHOOL&contentType=json&gubun=univ_list&thisPage=1&perPage=5\")",
       "Bash(curl -s http://localhost:3000/api/schools?region=%EC%84%9C%EC%9A%B8\\\\&kind=%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90\\\\&page=1\\\\&size=3)",
       "Bash(curl -s \"https://deepclasssite.vercel.app/api/schools?region=%EC%84%9C%EC%9A%B8&kind=%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90&page=1&size=3\")",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

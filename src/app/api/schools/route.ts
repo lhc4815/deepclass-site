@@ -54,7 +54,18 @@ export async function GET(request: NextRequest) {
     if (search) url.searchParams.set("SCHUL_NM", search);
 
     const text = await fetchNeis(url.toString());
-    const data = JSON.parse(text);
+
+    // 디버그: 응답 내용 확인
+    if (!text || text.length < 10) {
+      return NextResponse.json({ success: false, error: "NEIS 빈 응답", debug: text.slice(0, 100) }, { status: 502 });
+    }
+
+    let data: any;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      return NextResponse.json({ success: false, error: "JSON 파싱 실패", debug: text.slice(0, 200) }, { status: 502 });
+    }
 
     if (data.RESULT?.CODE === "INFO-200") {
       return NextResponse.json({ success: true, data: [], total: 0, page, size });
@@ -62,7 +73,7 @@ export async function GET(request: NextRequest) {
 
     const info = data.schoolInfo;
     if (!info || !info[1]?.row) {
-      return NextResponse.json({ success: true, data: [], total: 0, page, size });
+      return NextResponse.json({ success: true, data: [], total: 0, page, size, debug: JSON.stringify(data).slice(0, 200) });
     }
 
     const total = info[0]?.head?.[0]?.list_total_count || 0;
