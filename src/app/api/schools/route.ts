@@ -2,11 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 const NEIS_API_KEY = process.env.NEIS_API_KEY;
 
-// Vercel에서 NEIS SSL 문제 해결
-if (typeof process !== "undefined") {
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-}
-
 const OFFICE_CODES: Record<string, string> = {
   "서울": "B10", "부산": "C10", "대구": "D10", "인천": "E10", "광주": "F10",
   "대전": "G10", "울산": "H10", "세종": "I10", "경기": "J10", "강원": "K10",
