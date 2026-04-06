@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
 
     const info = data.schoolInfo;
     if (!info || !info[1]?.row) {
-      return NextResponse.json({ success: true, data: [], total: 0, page, size, debug: JSON.stringify(data).slice(0, 200) });
+      return NextResponse.json({ success: true, data: [], total: 0, page, size, debug: JSON.stringify(data).slice(0, 200), keyLen: NEIS_API_KEY?.trim().length, keyStart: NEIS_API_KEY?.trim().slice(0, 8), urlUsed: url.toString().slice(0, 150) });
     }
 
     const total = info[0]?.head?.[0]?.list_total_count || 0;
