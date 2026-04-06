@@ -53,7 +53,9 @@
       "WebFetch(domain:www.youtube.com)",
       "Bash(sed -i 's/categories\\\\.map/NEWS_CATEGORIES.map/g' src/app/news/page.tsx)",
       "Bash(sed -i 's/categoryColors\\\\[/NEWS_CATEGORY_COLORS[/g' src/app/news/page.tsx)",
-      "Bash(npm ls:*)"
+      "Bash(npm ls:*)",
+      "Bash(iconv -f euc-kr -t utf-8)",
+      "Bash(iconv -f cp949 -t utf-8 /c/Projects/deepclass.site/data/학원교습소정보_2026년02월28일기준.csv)"
     ]
   }
 }
