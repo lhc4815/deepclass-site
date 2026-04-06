@@ -355,29 +355,7 @@ export default function AdminPage() {
       )}
 
       {/* Videos Management Tab */}
-      {activeTab === "videos" && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold">영상 목록</h2>
-            <button className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl text-sm font-medium hover:from-primary-700 hover:to-primary-800 transition-all shadow-lg shadow-primary-600/20">
-              <Plus className="w-4 h-4" />
-              영상 추가
-            </button>
-          </div>
-          <div className="bg-surface rounded-2xl border border-border p-12 text-center">
-            <div className="w-16 h-16 bg-surface-secondary rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Play className="w-8 h-8 text-muted-light" />
-            </div>
-            <h3 className="font-semibold mb-1">YouTube API 연동 필요</h3>
-            <p className="text-sm text-muted max-w-sm mx-auto">
-              YouTube API 키를 설정하면 영상을 검색하고 관리할 수 있습니다.
-            </p>
-            <button className="mt-4 px-4 py-2 bg-surface-secondary rounded-xl text-xs font-medium text-muted hover:bg-background transition-colors">
-              API 설정하기
-            </button>
-          </div>
-        </div>
-      )}
+      {activeTab === "videos" && <VideoManager />}
 
       {/* Users Management Tab */}
       {activeTab === "users" && (
@@ -413,6 +391,107 @@ export default function AdminPage() {
 /* ── 일정 관리 컴포넌트 ── */
 const TYPES = ["수능", "원서접수", "전형", "합격발표", "등록", "발표", "모집", "기타"];
 const CATEGORIES = ["공통", "수시", "정시"];
+
+/* ── 영상 수집 관리 ── */
+function VideoManager() {
+  const [collecting, setCollecting] = useState(false);
+  const [rssCollecting, setRssCollecting] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+  const [videos, setVideos] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchVideos = () => {
+    setLoading(true);
+    fetch("/api/youtube?limit=20")
+      .then((r) => r.json())
+      .then((d) => { if (d.success) setVideos(d.data || []); })
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { fetchVideos(); }, []);
+
+  const collectAPI = async () => {
+    setCollecting(true); setResult(null);
+    const res = await fetch("/api/youtube/collect", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
+    const data = await res.json();
+    setResult(data.message || data.error);
+    setCollecting(false);
+    fetchVideos();
+  };
+
+  const collectRSS = async () => {
+    setRssCollecting(true); setResult(null);
+    const res = await fetch("/api/youtube/rss", { method: "POST" });
+    const data = await res.json();
+    setResult(data.message || data.error);
+    setRssCollecting(false);
+    fetchVideos();
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold">영상 관리 ({videos.length}개)</h2>
+        <div className="flex gap-2">
+          <button onClick={collectRSS} disabled={rssCollecting}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 transition-all">
+            <RefreshCw className={`w-3.5 h-3.5 ${rssCollecting ? "animate-spin" : ""}`} />
+            RSS 수집 (무제한)
+          </button>
+          <button onClick={collectAPI} disabled={collecting}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 transition-all">
+            <Plus className={`w-3.5 h-3.5 ${collecting ? "animate-spin" : ""}`} />
+            API 수집 (할당량 사용)
+          </button>
+        </div>
+      </div>
+
+      {result && (
+        <div className="bg-surface-secondary border border-border rounded-lg px-4 py-2 text-[12px]">{result}</div>
+      )}
+
+      <div className="bg-surface border border-border rounded-lg p-3 text-[11px] text-muted space-y-1">
+        <p><b>RSS 수집</b>: 입시 유튜브 채널에서 최신 영상 수집 (할당량 무제한, 매일 사용 권장)</p>
+        <p><b>API 수집</b>: YouTube API로 키워드 검색 수집 (하루 ~100회 제한, 필요시만 사용)</p>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-8"><div className="w-5 h-5 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" /></div>
+      ) : videos.length > 0 ? (
+        <div className="bg-surface border border-border rounded-lg overflow-hidden">
+          <table className="board-table">
+            <thead>
+              <tr>
+                <th className="w-24">썸네일</th>
+                <th className="td-title">제목</th>
+                <th className="w-20">채널</th>
+                <th className="w-16">카테고리</th>
+              </tr>
+            </thead>
+            <tbody>
+              {videos.map((v: any) => (
+                <tr key={v.id}>
+                  <td className="td-center"><img src={v.thumbnail} alt="" className="w-20 h-12 object-cover rounded" /></td>
+                  <td className="td-title">
+                    <a href={v.videoUrl} target="_blank" rel="noopener noreferrer" className="hover:text-primary-600 hover:underline text-[12px]">{v.title}</a>
+                  </td>
+                  <td className="td-center text-[11px] text-muted">{v.channelTitle}</td>
+                  <td className="td-center text-[11px] text-muted">{v.category || "전체"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="text-center py-8 bg-surface border border-border rounded-lg">
+          <Play className="w-8 h-8 text-muted-light mx-auto mb-2" />
+          <p className="text-[13px] text-muted mb-2">아직 수집된 영상이 없습니다.</p>
+          <p className="text-[11px] text-muted-light">위의 "RSS 수집" 버튼을 눌러 영상을 수집하세요.</p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function ScheduleManager() {
   const [items, setItems] = useState<ScheduleItem[]>([]);
