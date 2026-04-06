@@ -4,12 +4,7 @@ import { ArrowLeft, Send } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-
-const boards = [
-  { id: "susi", label: "수시" }, { id: "jeongsi", label: "정시" }, { id: "nonseul", label: "논술" },
-  { id: "hakjong", label: "학종" }, { id: "student", label: "학생게시판" }, { id: "parent", label: "학부모게시판" },
-  { id: "free", label: "자유게시판" }, { id: "qna", label: "질문&답변" },
-];
+import { COMMUNITY_BOARDS } from "@/lib/categories";
 
 export default function WritePage() {
   const router = useRouter();
@@ -48,7 +43,7 @@ export default function WritePage() {
             <label className="text-[12px] font-semibold text-muted w-16">게시판</label>
             <select value={board} onChange={(e) => setBoard(e.target.value)}
               className="flex-1 px-3 py-[6px] bg-surface border border-border rounded text-[13px] focus:outline-none focus:border-primary-400">
-              {boards.map((b) => <option key={b.id} value={b.id}>{b.label}</option>)}
+              {COMMUNITY_BOARDS.map((b) => <option key={b.id} value={b.id}>{b.group} &gt; {b.label}</option>)}
             </select>
           </div>
           <div className="flex items-center gap-3">

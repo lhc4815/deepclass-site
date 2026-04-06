@@ -5,11 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase";
-
-const boardLabels: Record<string, string> = {
-  susi: "수시", jeongsi: "정시", nonseul: "논술", hakjong: "학종",
-  student: "학생", parent: "학부모", free: "자유", qna: "Q&A",
-};
+import { BOARD_LABELS } from "@/lib/categories";
 
 function timeAgo(d: string): string {
   const diff = Date.now() - new Date(d).getTime();
@@ -89,7 +85,7 @@ export default function PostDetailPage() {
       {/* Post */}
       <div className="bg-surface border border-border rounded-lg">
         <div className="px-4 py-2.5 border-b-2 border-foreground bg-surface-secondary flex items-center gap-2">
-          <span className="text-[11px] font-semibold text-primary-600">[{boardLabels[post.board] || post.board}]</span>
+          <span className="text-[11px] font-semibold text-primary-600">[{BOARD_LABELS[post.board] || post.board}]</span>
           <h1 className="text-[14px] font-bold flex-1">{post.title}</h1>
         </div>
         {/* Meta */}

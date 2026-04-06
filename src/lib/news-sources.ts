@@ -54,6 +54,18 @@ export const RSS_SOURCES: NewsSource[] = [
     url: "https://news.google.com/rss/search?q=의대+입시&hl=ko&gl=KR&ceid=KR:ko",
     category: "의대",
   },
+  {
+    id: "google-kyodae",
+    name: "Google 뉴스",
+    url: "https://news.google.com/rss/search?q=교대+사범대+입시&hl=ko&gl=KR&ceid=KR:ko",
+    category: "교대",
+  },
+  {
+    id: "google-yecheneung",
+    name: "Google 뉴스",
+    url: "https://news.google.com/rss/search?q=예체능+입시+실기&hl=ko&gl=KR&ceid=KR:ko",
+    category: "예체능",
+  },
 ];
 
 /** 네이버 뉴스 검색 API 키워드 */
@@ -65,6 +77,8 @@ export const NAVER_KEYWORDS = [
   { keyword: "학생부종합전형", category: "학종" },
   { keyword: "내신 등급 입시", category: "내신" },
   { keyword: "의대 입시", category: "의대" },
+  { keyword: "교대 사범대 입시", category: "교대" },
+  { keyword: "예체능 입시 실기", category: "예체능" },
 ];
 
 /** 공통 뉴스 아이템 타입 */

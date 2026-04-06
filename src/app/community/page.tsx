@@ -7,16 +7,14 @@ import {
 import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 
-const boards = [
-  { id: "all", label: "전체" },
-  { id: "susi", label: "수시" },
-  { id: "jeongsi", label: "정시" },
-  { id: "nonseul", label: "논술" },
-  { id: "hakjong", label: "학종" },
-  { id: "student", label: "학생게시판" },
-  { id: "parent", label: "학부모게시판" },
-  { id: "free", label: "자유게시판" },
-  { id: "qna", label: "질문&답변" },
+import { COMMUNITY_BOARDS, BOARD_LABELS, BOARD_COLORS } from "@/lib/categories";
+
+const boardGroups = [
+  { group: "전형별", boards: COMMUNITY_BOARDS.filter((b) => b.group === "전형별") },
+  { group: "계열별", boards: COMMUNITY_BOARDS.filter((b) => b.group === "계열별") },
+  { group: "사용자별", boards: COMMUNITY_BOARDS.filter((b) => b.group === "사용자별") },
+  { group: "대학별", boards: COMMUNITY_BOARDS.filter((b) => b.group === "대학별") },
+  { group: "일반", boards: COMMUNITY_BOARDS.filter((b) => b.group === "일반") },
 ];
 
 const sortOptions = [
@@ -24,11 +22,6 @@ const sortOptions = [
   { id: "popular", label: "인기순" },
   { id: "comments", label: "댓글순" },
 ];
-
-const boardLabels: Record<string, string> = {
-  susi: "수시", jeongsi: "정시", nonseul: "논술", hakjong: "학종",
-  student: "학생", parent: "학부모", free: "자유", qna: "Q&A",
-};
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -92,7 +85,7 @@ export default function CommunityPage() {
             {hotPosts.map((p, i) => (
               <Link key={p.id} href={`/community/${p.id}`} className="flex items-center gap-2 px-4 py-2 hover:bg-surface-hover transition-colors">
                 <span className={`text-[11px] font-bold w-4 text-center ${i < 3 ? "text-rose-500" : "text-muted-light"}`}>{i + 1}</span>
-                <span className="text-[11px] font-semibold text-primary-600">[{boardLabels[p.board] || p.board}]</span>
+                <span className="text-[11px] font-semibold text-primary-600">[{BOARD_LABELS[p.board] || p.board}]</span>
                 <span className="text-[12px] truncate flex-1">{p.title}</span>
                 <span className="text-[10px] text-muted-light flex items-center gap-1">
                   <ThumbsUp className="w-3 h-3" />{p.likes_count}
@@ -107,21 +100,25 @@ export default function CommunityPage() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         {/* 좌측: 게시판 목록 */}
         <div className="lg:col-span-1">
-          <div className="bg-surface border border-border rounded-lg overflow-hidden">
+          <div className="bg-surface border border-border rounded-lg overflow-hidden lg:sticky lg:top-16">
             <div className="px-4 py-2 border-b-2 border-foreground bg-surface-secondary">
               <h2 className="text-[12px] font-bold">게시판</h2>
             </div>
-            <div className="divide-y divide-border-light">
-              {boards.map((b) => (
-                <button
-                  key={b.id}
-                  onClick={() => setActiveBoard(b.id)}
-                  className={`w-full text-left px-4 py-2 text-[12px] transition-colors ${
-                    activeBoard === b.id ? "bg-primary-50 text-primary-700 font-semibold" : "text-muted hover:bg-surface-hover"
-                  }`}
-                >
-                  {b.label}
-                </button>
+            <div>
+              <button onClick={() => setActiveBoard("all")}
+                className={`w-full text-left px-4 py-2 text-[12px] font-medium border-b border-border-light ${activeBoard === "all" ? "bg-primary-50 text-primary-700 font-semibold" : "text-muted hover:bg-surface-hover"}`}>
+                전체
+              </button>
+              {boardGroups.map((g) => (
+                <div key={g.group}>
+                  <div className="px-4 py-1.5 bg-surface-secondary text-[10px] font-bold text-muted-light uppercase tracking-wider">{g.group}</div>
+                  {g.boards.map((b) => (
+                    <button key={b.id} onClick={() => setActiveBoard(b.id)}
+                      className={`w-full text-left px-4 py-1.5 text-[12px] transition-colors ${activeBoard === b.id ? "bg-primary-50 text-primary-700 font-semibold" : "text-muted hover:bg-surface-hover"}`}>
+                      {b.label}
+                    </button>
+                  ))}
+                </div>
               ))}
             </div>
           </div>
@@ -162,7 +159,7 @@ export default function CommunityPage() {
                   {posts.map((p) => (
                     <tr key={p.id}>
                       <td className="td-center">
-                        <span className="text-[11px] font-semibold text-primary-600">{boardLabels[p.board] || p.board}</span>
+                        <span className="text-[11px] font-semibold text-primary-600">{BOARD_LABELS[p.board] || p.board}</span>
                       </td>
                       <td className="td-title">
                         <Link href={`/community/${p.id}`} className="hover:text-primary-600 hover:underline transition-colors">

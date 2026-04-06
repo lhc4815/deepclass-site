@@ -50,7 +50,9 @@
       "Bash(curl -s \"https://deepclasssite.vercel.app/api/schools?region=%EC%84%9C%EC%9A%B8&kind=%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90&page=1&size=3\")",
       "Bash(curl:*)",
       "Bash(git commit:*)",
-      "WebFetch(domain:www.youtube.com)"
+      "WebFetch(domain:www.youtube.com)",
+      "Bash(sed -i 's/categories\\\\.map/NEWS_CATEGORIES.map/g' src/app/news/page.tsx)",
+      "Bash(sed -i 's/categoryColors\\\\[/NEWS_CATEGORY_COLORS[/g' src/app/news/page.tsx)"
     ]
   }
 }
