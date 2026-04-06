@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import https from "https";
 
-const NEIS_API_KEY = process.env.NEIS_API_KEY;
+const NEIS_API_KEY = process.env.NEIS_API_KEY?.trim();
 
 const OFFICE_CODES: Record<string, string> = {
   "서울": "B10", "부산": "C10", "대구": "D10", "인천": "E10", "광주": "F10",
@@ -55,17 +55,11 @@ export async function GET(request: NextRequest) {
 
     const text = await fetchNeis(url.toString());
 
-    // 디버그
     if (!text || text.length < 10) {
-      return NextResponse.json({ success: false, error: "NEIS empty", debug: text.slice(0, 100), keyLen: NEIS_API_KEY?.length, keyStart: NEIS_API_KEY?.slice(0, 6) }, { status: 502 });
+      return NextResponse.json({ success: false, error: "NEIS 응답 없음" }, { status: 502 });
     }
 
-    let data: any;
-    try {
-      data = JSON.parse(text);
-    } catch {
-      return NextResponse.json({ success: false, error: "JSON parse fail", debug: text.slice(0, 200), keyLen: NEIS_API_KEY?.length, keyStart: NEIS_API_KEY?.slice(0, 6) }, { status: 502 });
-    }
+    const data = JSON.parse(text);
 
     if (data.RESULT?.CODE === "INFO-200") {
       return NextResponse.json({ success: true, data: [], total: 0, page, size });
@@ -73,7 +67,7 @@ export async function GET(request: NextRequest) {
 
     const info = data.schoolInfo;
     if (!info || !info[1]?.row) {
-      return NextResponse.json({ success: true, data: [], total: 0, page, size, debug: JSON.stringify(data).slice(0, 200), keyLen: NEIS_API_KEY?.trim().length, keyStart: NEIS_API_KEY?.trim().slice(0, 8), urlUsed: url.toString().slice(0, 150) });
+      return NextResponse.json({ success: true, data: [], total: 0, page, size });
     }
 
     const total = info[0]?.head?.[0]?.list_total_count || 0;
