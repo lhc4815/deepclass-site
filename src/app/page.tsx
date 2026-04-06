@@ -97,8 +97,8 @@ export default function HomePage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {news.slice(0, 8).map((item) => (
-                    <tr key={item.id}>
+                  {news.slice(0, 8).map((item, idx) => (
+                    <tr key={`${item.id}-${idx}`}>
                       <td className="td-center">
                         <span className={`text-[11px] font-semibold ${categoryColors[item.category] || "text-gray-600"}`}>{item.category}</span>
                       </td>
