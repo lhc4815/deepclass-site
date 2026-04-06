@@ -36,19 +36,25 @@ const academyCategories: AcademyCategory[] = [
   ]},
 ];
 
-interface RankItem { name: string; searchVolume: number; }
+interface RankItem { name: string; searchVolume: number; category: string; }
 
 export default function AcademyPage() {
   const [mainTab, setMainTab] = useState<"recommend" | "search">("recommend");
   const [activeCat, setActiveCat] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [rankings, setRankings] = useState<RankItem[]>([]);
+  const [rankings, setRankings] = useState<Record<string, RankItem[]>>({});
   const [rankLoading, setRankLoading] = useState(true);
+  const [activeRankCat, setActiveRankCat] = useState("");
 
   useEffect(() => {
     fetch("/api/academy-rank")
       .then((r) => r.json())
-      .then((d) => { if (d.success) setRankings(d.data); })
+      .then((d) => {
+        if (d.success && d.data) {
+          setRankings(d.data);
+          setActiveRankCat(Object.keys(d.data)[0] || "");
+        }
+      })
       .catch(() => {})
       .finally(() => setRankLoading(false));
   }, []);
@@ -131,25 +137,34 @@ export default function AcademyPage() {
           ))}
         </div>
 
-        {/* 우측: 인기 랭킹 */}
+        {/* 우측: 카테고리별 인기 랭킹 */}
         <div>
           <div className="bg-surface border border-border rounded-lg overflow-hidden sticky top-16">
             <div className="px-4 py-2.5 border-b-2 border-foreground bg-surface-secondary flex items-center gap-1.5">
               <Trophy className="w-4 h-4 text-amber-500" />
-              <h2 className="text-[13px] font-bold">입시학원 인기 랭킹</h2>
+              <h2 className="text-[13px] font-bold">인기 랭킹</h2>
             </div>
             <div className="px-3 py-1.5 bg-surface-secondary/50 border-b border-border-light">
-              <p className="text-[10px] text-muted-light">네이버 검색량 기준 · 1시간마다 업데이트</p>
+              <p className="text-[10px] text-muted-light">네이버 검색량 기준 · 2시간마다 갱신</p>
+            </div>
+            {/* 카테고리 탭 */}
+            <div className="flex flex-wrap gap-0.5 px-2 py-1.5 border-b border-border-light bg-surface-secondary/30">
+              {Object.keys(rankings).map((cat) => (
+                <button key={cat} onClick={() => setActiveRankCat(cat)}
+                  className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${activeRankCat === cat ? "bg-primary-600 text-white" : "text-muted hover:bg-surface-secondary"}`}>
+                  {cat}
+                </button>
+              ))}
             </div>
             {rankLoading ? (
               <div className="flex justify-center py-8"><Loader2 className="w-4 h-4 text-primary-600 animate-spin" /></div>
-            ) : (
+            ) : activeRankCat && rankings[activeRankCat] ? (
               <div className="divide-y divide-border-light">
-                {rankings.map((r, i) => {
-                  const maxVol = rankings[0]?.searchVolume || 1;
+                {rankings[activeRankCat].map((r, i) => {
+                  const maxVol = rankings[activeRankCat][0]?.searchVolume || 1;
                   const pct = Math.round((r.searchVolume / maxVol) * 100);
                   return (
-                    <div key={r.name} className="flex items-center gap-2.5 px-4 py-2.5 hover:bg-surface-hover transition-colors">
+                    <div key={r.name} className="flex items-center gap-2.5 px-4 py-2 hover:bg-surface-hover transition-colors">
                       <span className={`text-[12px] font-extrabold w-5 text-center ${
                         i === 0 ? "text-amber-500" : i === 1 ? "text-gray-400" : i === 2 ? "text-amber-700" : "text-muted-light"
                       }`}>{i + 1}</span>
@@ -166,6 +181,8 @@ export default function AcademyPage() {
                   );
                 })}
               </div>
+            ) : (
+              <p className="text-center py-4 text-[11px] text-muted-light">카테고리를 선택하세요</p>
             )}
           </div>
         </div>
