@@ -127,8 +127,8 @@ export default function NewsPage() {
         <>
           <p className="text-[11px] text-muted-light">총 {filteredNews.length}건</p>
           <div className="space-y-2">
-            {filteredNews.map((item) => (
-              <a key={item.id} href={item.link} target="_blank" rel="noopener noreferrer"
+            {filteredNews.map((item, idx) => (
+              <a key={`${item.id}-${idx}`} href={item.link} target="_blank" rel="noopener noreferrer"
                 className="flex gap-3 bg-surface border border-border rounded-lg p-3 hover:border-primary-300 transition-colors group">
                 <div className="hidden sm:block w-32 h-20 flex-shrink-0 rounded overflow-hidden bg-surface-secondary">
                   <NewsImage articleUrl={item.link} alt={item.title} />

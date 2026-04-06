@@ -59,14 +59,9 @@ async function searchYouTube(query: string, maxResults = 10): Promise<any[]> {
 export async function POST(request: NextRequest) {
   const supabase = await getSupabase();
 
-  // 관리자 확인
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ success: false, error: "로그인이 필요합니다." }, { status: 401 });
-  }
-  const { data: profile } = await supabase.from("profiles").select("user_type").eq("id", user.id).single();
-  if (profile?.user_type !== "관리자") {
-    return NextResponse.json({ success: false, error: "관리자 권한이 필요합니다." }, { status: 403 });
   }
 
   const body = await request.json().catch(() => ({}));

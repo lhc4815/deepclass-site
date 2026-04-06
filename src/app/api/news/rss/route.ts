@@ -64,7 +64,7 @@ function parseRssItems(
     if (!title) continue;
 
     items.push({
-      id: `rss-${Buffer.from(link || title).toString("base64url").slice(0, 40)}`,
+      id: `rss-${Buffer.from(link || title).toString("base64url")}`,
       title,
       link,
       description: stripHtml(rawDesc).slice(0, 200),

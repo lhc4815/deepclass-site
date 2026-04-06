@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
         const data: NaverResponse = await res.json();
 
         return data.items.map((item): NewsItem => ({
-          id: `naver-${Buffer.from(item.link).toString("base64url").slice(0, 40)}`,
+          id: `naver-${Buffer.from(item.originallink || item.link).toString("base64url")}`,
           title: stripHtml(item.title),
           link: item.originallink || item.link,
           description: stripHtml(item.description).slice(0, 200),

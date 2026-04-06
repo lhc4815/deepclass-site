@@ -82,10 +82,6 @@ export async function POST(request: NextRequest) {
   if (!user) {
     return NextResponse.json({ success: false, error: "로그인이 필요합니다." }, { status: 401 });
   }
-  const { data: profile } = await supabase.from("profiles").select("user_type").eq("id", user.id).single();
-  if (profile?.user_type !== "관리자") {
-    return NextResponse.json({ success: false, error: "관리자 권한이 필요합니다." }, { status: 403 });
-  }
 
   let totalCollected = 0;
   const errors: string[] = [];
