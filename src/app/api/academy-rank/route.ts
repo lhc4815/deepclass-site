@@ -28,8 +28,19 @@ const REGION_SHORT: Record<string, string> = {
   "경상북도교육청": "경북", "경상남도교육청": "경남", "제주특별자치도교육청": "제주",
 };
 
+/** 학원명 축약 (트렌드 검색용) */
+function shortenName(name: string): string {
+  let s = name;
+  s = s.replace(/^\(주\)|\(사\)|\(학\)|\(재\)/g, "");
+  s = s.replace(/(보습|전문|종합|입시|진학지도|상담지도|원격)?(학원|교습소|아카데미)$/g, "");
+  s = s.replace(/(본관|별관|분원|신관|\d관|[A-Z]관|하이페리온관|현대관\d?|프리미엄관)$/g, "");
+  s = s.replace(/\d+$/, "");
+  return s.trim() || name;
+}
+
 interface RankItem {
   name: string;
+  shortName: string;
   trend: number;
   district: string;
   phone: string;
@@ -42,6 +53,7 @@ const RANK_AREAS = [
   { area: "송파구", region: "서울", district: "송파구" },
   { area: "양천구(목동)", region: "서울", district: "양천구" },
   { area: "노원구(중계)", region: "서울", district: "노원구" },
+  { area: "마포/서대문", region: "서울", district: "마포구|서대문구" },
   { area: "성남시(분당)", region: "경기", district: "성남시" },
   { area: "수원시", region: "경기", district: "수원시" },
   { area: "고양시(일산)", region: "경기", district: "고양시" },
@@ -49,24 +61,32 @@ const RANK_AREAS = [
   { area: "부산", region: "부산", district: "" },
   { area: "대구", region: "대구", district: "" },
   { area: "인천", region: "인천", district: "" },
+  { area: "대전", region: "대전", district: "" },
 ];
 
-// 캐시 (24시간)
+// 캐시 (7일 = 주간 갱신)
 let cache: { data: Record<string, RankItem[]>; timestamp: number } | null = null;
-const CACHE_TTL = 86400000;
+const CACHE_TTL = 7 * 86400000;
 
-/** 네이버 데이터랩 검색어 트렌드 (최대 5개씩) */
-async function getTrends(keywords: string[]): Promise<Record<string, number>> {
+/** 네이버 데이터랩 검색어 트렌드 (5개씩 배치) */
+async function getTrends(keywords: { name: string; short: string }[]): Promise<Record<string, number>> {
   if (!NAVER_CLIENT_ID || !NAVER_CLIENT_SECRET || keywords.length === 0) return {};
 
   const endDate = new Date().toISOString().split("T")[0];
-  const startDate = new Date(Date.now() - 90 * 86400000).toISOString().split("T")[0]; // 3개월
+  const startDate = new Date(Date.now() - 90 * 86400000).toISOString().split("T")[0];
 
   const result: Record<string, number> = {};
 
-  // 5개씩 배치 (API 제한)
-  for (let i = 0; i < keywords.length; i += 5) {
-    const batch = keywords.slice(i, i + 5);
+  // 중복 축약명 제거
+  const seen = new Set<string>();
+  const unique = keywords.filter((k) => {
+    if (seen.has(k.short)) return false;
+    seen.add(k.short);
+    return true;
+  });
+
+  for (let i = 0; i < unique.length; i += 5) {
+    const batch = unique.slice(i, i + 5);
     try {
       const res = await fetch("https://openapi.naver.com/v1/datalab/search", {
         method: "POST",
@@ -76,23 +96,15 @@ async function getTrends(keywords: string[]): Promise<Record<string, number>> {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          startDate,
-          endDate,
-          timeUnit: "month",
-          keywordGroups: batch.map((kw) => ({
-            groupName: kw,
-            keywords: [kw],
-          })),
+          startDate, endDate, timeUnit: "month",
+          keywordGroups: batch.map((kw) => ({ groupName: kw.short, keywords: [kw.short] })),
         }),
       });
-
       if (!res.ok) continue;
       const data = await res.json();
-
       for (const r of data.results || []) {
-        // 최근 월의 ratio 사용
         const latest = r.data?.[r.data.length - 1];
-        result[r.title] = latest?.ratio || 0;
+        if (latest?.ratio) result[r.title] = latest.ratio;
       }
     } catch {}
   }
@@ -109,39 +121,43 @@ export async function GET() {
   const result: Record<string, RankItem[]> = {};
 
   for (const area of RANK_AREAS) {
-    // 1. DB에서 해당 지역 입시학원 후보 추출 (원격 제외, 정원 상위)
+    // 1. DB에서 후보 40개 (원격/온라인 제외)
     const candidates = data
       .filter((a) => {
         const short = REGION_SHORT[a.r1] || a.r1;
         if (short !== area.region) return false;
-        if (area.district && !a.r2.includes(area.district)) return false;
+        if (area.district) {
+          const dists = area.district.split("|");
+          if (!dists.some((d) => a.r2 === d || a.r2.includes(d))) return false;
+        }
         if (!(a.f?.includes("입시") || a.f?.includes("보습"))) return false;
-        if (a.n.includes("원격") || a.n.includes("온라인")) return false;
-        if (a.cap > 50000) return false; // 비정상
+        if (a.n.includes("원격") || a.n.includes("온라인") || a.n.includes("화상")) return false;
+        if (a.cap > 50000 || a.cap <= 0) return false;
         return true;
       })
       .sort((a, b) => b.cap - a.cap)
-      .slice(0, 15); // 상위 15개 후보
+      .slice(0, 100);
 
     if (candidates.length === 0) continue;
 
-    // 2. 네이버 데이터랩으로 검색 트렌드 조회
-    const keywords = candidates.map((c) => c.n.replace(/\(.*\)/, "").trim());
+    // 2. 축약명으로 트렌드 조회 (중복 제거)
+    const keywords = candidates.map((c) => ({ name: c.n, short: shortenName(c.n) }));
     const trends = await getTrends(keywords);
 
-    // 3. 트렌드 기준 정렬 (트렌드 0이면 정원순 폴백)
-    const ranked = candidates.map((a) => {
-      const cleanName = a.n.replace(/\(.*\)/, "").trim();
+    // 3. 결과 구성
+    const ranked: RankItem[] = candidates.map((a) => {
+      const short = shortenName(a.n);
       return {
         name: a.n,
-        trend: trends[cleanName] || 0,
+        shortName: short,
+        trend: trends[short] || 0,
         district: a.r2,
         phone: a.p || "",
         established: a.est || "",
       };
     });
 
-    // 트렌드 있는 것 우선 → 트렌드 순 → 없으면 이름순
+    // 트렌드 있는 것 먼저, 트렌드 순, 없으면 정원순 유지
     ranked.sort((a, b) => {
       if (a.trend > 0 && b.trend > 0) return b.trend - a.trend;
       if (a.trend > 0) return -1;
@@ -149,7 +165,7 @@ export async function GET() {
       return 0;
     });
 
-    result[area.area] = ranked.slice(0, 10);
+    result[area.area] = ranked.slice(0, 30);
   }
 
   cache = { data: result, timestamp: Date.now() };

@@ -12,7 +12,7 @@ interface AcademyItem {
   dormitory: boolean; established: string;
 }
 
-interface RankItem { name: string; trend: number; district: string; phone: string; established: string; }
+interface RankItem { name: string; shortName: string; trend: number; district: string; phone: string; established: string; }
 
 export default function AcademyPage() {
   const [mainTab, setMainTab] = useState<"top" | "search">("top");
@@ -181,7 +181,7 @@ function TopAcademies() {
                           i === 0 ? "text-amber-500" : i === 1 ? "text-gray-400" : i === 2 ? "text-amber-700" : "text-muted-light"
                         }`}>{i + 1}</span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[11px] font-semibold truncate">{r.name}</p>
+                          <p className="text-[11px] font-semibold truncate">{r.shortName || r.name}</p>
                           <div className="flex items-center gap-1.5 text-[9px] text-muted-light mt-0.5">
                             {r.established && <span>{r.established.slice(0,4)}~</span>}
                             {r.phone && <span>{r.phone}</span>}
