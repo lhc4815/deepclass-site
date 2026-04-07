@@ -287,19 +287,24 @@ function AcademySearch() {
               <tr>
                 <th className="td-title">학원명</th>
                 <th className="w-14">구군</th>
-                <th className="w-20">분야</th>
                 <th className="w-20 hidden md:table-cell">교습과정</th>
+                <th className="w-12 hidden md:table-cell">정원</th>
+                <th className="w-12 hidden lg:table-cell">기숙</th>
                 <th className="hidden lg:table-cell td-title">주소</th>
                 <th className="w-24 hidden md:table-cell">전화</th>
               </tr>
             </thead>
             <tbody>
-              {results.map((a, i) => (
+              {results.map((a: any, i: number) => (
                 <tr key={`${a.name}-${i}`}>
-                  <td className="td-title font-semibold text-[12px]">{a.name}</td>
+                  <td className="td-title font-semibold text-[12px]">
+                    {a.name}
+                    {a.established && <span className="text-[9px] text-muted-light ml-1">({a.established.slice(0,4)}~)</span>}
+                  </td>
                   <td className="td-center text-[11px] text-muted">{a.district}</td>
-                  <td className="td-center text-[10px] text-muted">{a.field.slice(0, 8)}</td>
                   <td className="hidden md:table-cell td-center text-[10px] text-muted">{a.course}</td>
+                  <td className="hidden md:table-cell td-center text-[10px] text-muted">{a.capacity > 0 ? a.capacity : "-"}</td>
+                  <td className="hidden lg:table-cell td-center text-[10px]">{a.dormitory ? <span className="text-emerald-600 font-bold">Y</span> : "-"}</td>
                   <td className="hidden lg:table-cell text-[11px] text-muted">{a.address}</td>
                   <td className="hidden md:table-cell td-center text-[11px] text-muted">{a.phone}</td>
                 </tr>

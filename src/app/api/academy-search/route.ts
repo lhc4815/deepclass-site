@@ -13,6 +13,9 @@ interface Academy {
   c: string;  // 교습과정
   a: string;  // 주소
   p: string;  // 전화
+  cap: number;   // 정원
+  gisuk: boolean; // 기숙사
+  est: string;   // 개설일자
 }
 
 let cachedData: Academy[] | null = null;
@@ -107,6 +110,9 @@ export async function GET(request: NextRequest) {
         course: a.c,
         address: a.a,
         phone: a.p,
+        capacity: a.cap || 0,
+        dormitory: a.gisuk || false,
+        established: a.est || "",
       })),
       total,
       page,
