@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 import fs from "fs";
 import path from "path";
 
@@ -7,16 +9,17 @@ export const runtime = "nodejs";
 const NAVER_CLIENT_ID = process.env.NAVER_CLIENT_ID?.trim();
 const NAVER_CLIENT_SECRET = process.env.NAVER_CLIENT_SECRET?.trim();
 
+// === 학원 JSON 데이터 ===
 interface Academy {
   n: string; r1: string; r2: string; f: string; s: string; c: string;
   a: string; p: string; cap: number; gisuk: boolean; est: string;
 }
 
-let cachedData: Academy[] | null = null;
-function loadData(): Academy[] {
-  if (cachedData) return cachedData;
-  cachedData = JSON.parse(fs.readFileSync(path.join(process.cwd(), "data", "academies.json"), "utf-8"));
-  return cachedData!;
+let cachedFileData: Academy[] | null = null;
+function loadFileData(): Academy[] {
+  if (cachedFileData) return cachedFileData;
+  cachedFileData = JSON.parse(fs.readFileSync(path.join(process.cwd(), "data", "academies.json"), "utf-8"));
+  return cachedFileData!;
 }
 
 const REGION_SHORT: Record<string, string> = {
@@ -28,7 +31,6 @@ const REGION_SHORT: Record<string, string> = {
   "경상북도교육청": "경북", "경상남도교육청": "경남", "제주특별자치도교육청": "제주",
 };
 
-/** 학원명 축약 (트렌드 검색용) */
 function shortenName(name: string): string {
   let s = name;
   s = s.replace(/^\(주\)|\(사\)|\(학\)|\(재\)/g, "");
@@ -36,15 +38,6 @@ function shortenName(name: string): string {
   s = s.replace(/(본관|별관|분원|신관|\d관|[A-Z]관|하이페리온관|현대관\d?|프리미엄관)$/g, "");
   s = s.replace(/\d+$/, "");
   return s.trim() || name;
-}
-
-interface RankItem {
-  name: string;
-  shortName: string;
-  trend: number;
-  district: string;
-  phone: string;
-  established: string;
 }
 
 const RANK_AREAS = [
@@ -64,26 +57,29 @@ const RANK_AREAS = [
   { area: "대전", region: "대전", district: "" },
 ];
 
-// 캐시 (7일 = 주간 갱신)
-let cache: { data: Record<string, RankItem[]>; timestamp: number } | null = null;
-const CACHE_TTL = 7 * 86400000;
+async function getSupabase() {
+  const cookieStore = await cookies();
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll(); },
+        setAll(cookiesToSet) {
+          try { cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options)); } catch {}
+        },
+      },
+    }
+  );
+}
 
-/** 네이버 데이터랩 검색어 트렌드 (5개씩 배치) */
-async function getTrends(keywords: { name: string; short: string }[]): Promise<Record<string, number>> {
+/** 네이버 데이터랩 (5개씩 배치) */
+async function getTrends(keywords: string[]): Promise<Record<string, number>> {
   if (!NAVER_CLIENT_ID || !NAVER_CLIENT_SECRET || keywords.length === 0) return {};
-
   const endDate = new Date().toISOString().split("T")[0];
   const startDate = new Date(Date.now() - 90 * 86400000).toISOString().split("T")[0];
-
   const result: Record<string, number> = {};
-
-  // 중복 축약명 제거
-  const seen = new Set<string>();
-  const unique = keywords.filter((k) => {
-    if (seen.has(k.short)) return false;
-    seen.add(k.short);
-    return true;
-  });
+  const unique = [...new Set(keywords)];
 
   for (let i = 0; i < unique.length; i += 5) {
     const batch = unique.slice(i, i + 5);
@@ -97,7 +93,7 @@ async function getTrends(keywords: { name: string; short: string }[]): Promise<R
         },
         body: JSON.stringify({
           startDate, endDate, timeUnit: "month",
-          keywordGroups: batch.map((kw) => ({ groupName: kw.short, keywords: [kw.short] })),
+          keywordGroups: batch.map((kw) => ({ groupName: kw, keywords: [kw] })),
         }),
       });
       if (!res.ok) continue;
@@ -108,21 +104,61 @@ async function getTrends(keywords: { name: string; short: string }[]): Promise<R
       }
     } catch {}
   }
-
   return result;
 }
 
+// GET: 랭킹 조회 (DB에서 읽기, 없으면 갱신 트리거)
 export async function GET() {
-  if (cache && Date.now() - cache.timestamp < CACHE_TTL) {
-    return NextResponse.json({ success: true, data: cache.data, areas: RANK_AREAS.map((a) => a.area) });
+  const supabase = await getSupabase();
+
+  // DB에서 랭킹 읽기
+  const { data: dbRankings } = await supabase
+    .from("academy_rankings")
+    .select("*")
+    .order("trend_score", { ascending: false });
+
+  // DB에 데이터가 있고, 최근 7일 이내 업데이트면 DB 결과 반환
+  if (dbRankings && dbRankings.length > 0) {
+    const lastUpdated = new Date(dbRankings[0].last_updated).getTime();
+    const isRecent = Date.now() - lastUpdated < 7 * 86400000;
+
+    if (isRecent) {
+      const result: Record<string, any[]> = {};
+      for (const r of dbRankings) {
+        if (!result[r.area]) result[r.area] = [];
+        result[r.area].push({
+          name: r.name,
+          shortName: r.short_name,
+          trend: r.trend_score,
+          district: r.district,
+          phone: r.phone,
+          established: r.established,
+          weeksRanked: r.weeks_ranked,
+        });
+      }
+      // 각 지역 TOP 30
+      for (const area in result) {
+        result[area] = result[area].sort((a: any, b: any) => b.trend - a.trend).slice(0, 30);
+      }
+      return NextResponse.json({ success: true, data: result, areas: RANK_AREAS.map((a) => a.area), fromDB: true });
+    }
   }
 
-  const data = loadData();
-  const result: Record<string, RankItem[]> = {};
+  // === 갱신 필요: 트렌드 조회 + DB 업데이트 ===
+  const fileData = loadFileData();
+  const result: Record<string, any[]> = {};
 
   for (const area of RANK_AREAS) {
-    // 1. DB에서 후보 40개 (원격/온라인 제외)
-    const candidates = data
+    // 1. 기존 DB 후보 가져오기
+    const { data: existing } = await supabase
+      .from("academy_rankings")
+      .select("name, short_name, trend_score, weeks_in_pool, weeks_ranked")
+      .eq("area", area.area);
+
+    const existingNames = new Set((existing || []).map((e: any) => e.name));
+
+    // 2. 파일에서 새 후보 추가 (기존 풀에 없는 학원)
+    const newCandidates = fileData
       .filter((a) => {
         const short = REGION_SHORT[a.r1] || a.r1;
         if (short !== area.region) return false;
@@ -133,48 +169,74 @@ export async function GET() {
         if (!(a.f?.includes("입시") || a.f?.includes("보습"))) return false;
         if (a.n.includes("원격") || a.n.includes("온라인") || a.n.includes("화상")) return false;
         if (a.cap > 50000 || a.cap <= 0) return false;
-        return true;
+        return !existingNames.has(a.n);
       })
       .sort((a, b) => b.cap - a.cap)
-      .slice(0, 100);
+      .slice(0, 30); // 새 후보 30개 추가
 
-    if (candidates.length === 0) continue;
+    // 3. 전체 후보 = 기존 + 신규
+    const allCandidates = [
+      ...(existing || []).map((e: any) => ({ name: e.name, shortName: e.short_name })),
+      ...newCandidates.map((c) => ({ name: c.n, shortName: shortenName(c.n) })),
+    ];
 
-    // 2. 축약명으로 트렌드 조회 (중복 제거)
-    const keywords = candidates.map((c) => ({ name: c.n, short: shortenName(c.n) }));
-    const trends = await getTrends(keywords);
+    // 4. 트렌드 조회
+    const trends = await getTrends(allCandidates.map((c) => c.shortName));
 
-    // 3. 결과 구성
-    const ranked: RankItem[] = candidates.map((a) => {
-      const short = shortenName(a.n);
-      return {
-        name: a.n,
-        shortName: short,
-        trend: trends[short] || 0,
-        district: a.r2,
-        phone: a.p || "",
-        established: a.est || "",
-      };
-    });
+    // 5. DB에 upsert (점수 업데이트 + 새 후보 추가)
+    const now = new Date().toISOString();
+    for (const cand of allCandidates) {
+      const score = trends[cand.shortName] || 0;
+      const existingItem = (existing || []).find((e: any) => e.name === cand.name);
+      const fileItem = fileData.find((f) => f.n === cand.name);
 
-    // 트렌드 있는 것 먼저, 트렌드 순, 없으면 정원순 유지
-    ranked.sort((a, b) => {
-      if (a.trend > 0 && b.trend > 0) return b.trend - a.trend;
-      if (a.trend > 0) return -1;
-      if (b.trend > 0) return 1;
-      return 0;
-    });
+      await supabase.from("academy_rankings").upsert({
+        area: area.area,
+        name: cand.name,
+        short_name: cand.shortName,
+        district: fileItem?.r2 || "",
+        phone: fileItem?.p || "",
+        established: fileItem?.est || "",
+        prev_score: existingItem?.trend_score || 0,
+        trend_score: score,
+        weeks_in_pool: (existingItem?.weeks_in_pool || 0) + 1,
+        weeks_ranked: (existingItem?.weeks_ranked || 0) + (score > 0 ? 1 : 0),
+        last_updated: now,
+      }, { onConflict: "area,name" });
+    }
 
-    result[area.area] = ranked.slice(0, 30);
+    // 6. 풀 정리: 4주 이상 트렌드 0인 학원 제거 (풀 관리)
+    await supabase.from("academy_rankings")
+      .delete()
+      .eq("area", area.area)
+      .eq("trend_score", 0)
+      .lt("prev_score", 0.01)
+      .gte("weeks_in_pool", 4);
+
+    // 7. 결과 구성 (TOP 30)
+    const { data: updated } = await supabase
+      .from("academy_rankings")
+      .select("*")
+      .eq("area", area.area)
+      .order("trend_score", { ascending: false })
+      .limit(30);
+
+    result[area.area] = (updated || []).map((r: any) => ({
+      name: r.name,
+      shortName: r.short_name,
+      trend: r.trend_score,
+      district: r.district,
+      phone: r.phone,
+      established: r.established,
+      weeksRanked: r.weeks_ranked,
+    }));
   }
-
-  cache = { data: result, timestamp: Date.now() };
 
   return NextResponse.json({
     success: true,
     data: result,
     areas: RANK_AREAS.map((a) => a.area),
-  }, {
-    headers: { "Cache-Control": "public, max-age=86400, s-maxage=86400" },
+    fromDB: false,
+    message: "랭킹 갱신 완료",
   });
 }
