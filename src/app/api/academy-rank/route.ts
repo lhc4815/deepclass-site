@@ -40,21 +40,34 @@ function shortenName(name: string): string {
   return s.trim() || name;
 }
 
+// 서울 25개 구 + 경기 주요 시 + 기타 시도
 const RANK_AREAS = [
-  { area: "강남구", region: "서울", district: "강남구" },
-  { area: "서초구", region: "서울", district: "서초구" },
-  { area: "송파구", region: "서울", district: "송파구" },
-  { area: "양천구(목동)", region: "서울", district: "양천구" },
-  { area: "노원구(중계)", region: "서울", district: "노원구" },
-  { area: "마포/서대문", region: "서울", district: "마포구|서대문구" },
-  { area: "성남시(분당)", region: "경기", district: "성남시" },
-  { area: "수원시", region: "경기", district: "수원시" },
-  { area: "고양시(일산)", region: "경기", district: "고양시" },
-  { area: "용인시", region: "경기", district: "용인시" },
+  // 서울 (25개 구)
+  ...["강남구","강동구","강북구","강서구","관악구","광진구","구로구","금천구","노원구","도봉구",
+    "동대문구","동작구","마포구","서대문구","서초구","성동구","성북구","송파구","양천구",
+    "영등포구","용산구","은평구","종로구","중구","중랑구"
+  ].map(d => ({ area: `서울 ${d}`, region: "서울", district: d })),
+  // 경기 (주요 시)
+  ...["고양시","과천시","광명시","광주시","구리시","군포시","김포시","남양주시","부천시",
+    "성남시","수원시","시흥시","안산시","안양시","양주시","여주시","오산시","용인시",
+    "의왕시","의정부시","이천시","파주시","평택시","하남시","화성시"
+  ].map(d => ({ area: `경기 ${d}`, region: "경기", district: d })),
+  // 기타 시도
   { area: "부산", region: "부산", district: "" },
   { area: "대구", region: "대구", district: "" },
   { area: "인천", region: "인천", district: "" },
+  { area: "광주", region: "광주", district: "" },
   { area: "대전", region: "대전", district: "" },
+  { area: "울산", region: "울산", district: "" },
+  { area: "세종", region: "세종", district: "" },
+  { area: "강원", region: "강원", district: "" },
+  { area: "충북", region: "충북", district: "" },
+  { area: "충남", region: "충남", district: "" },
+  { area: "전북", region: "전북", district: "" },
+  { area: "전남", region: "전남", district: "" },
+  { area: "경북", region: "경북", district: "" },
+  { area: "경남", region: "경남", district: "" },
+  { area: "제주", region: "제주", district: "" },
 ];
 
 async function getSupabase() {
@@ -107,22 +120,27 @@ async function getTrends(keywords: string[]): Promise<Record<string, number>> {
   return result;
 }
 
-// GET: 랭킹 조회 (DB에서 읽기, 없으면 갱신 트리거)
-export async function GET() {
+// GET: 랭킹 조회
+// ?area=서울 강남구 → 특정 지역만 조회/갱신
+// ?refresh=true → 강제 갱신
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const requestedArea = searchParams.get("area") || "";
+  const forceRefresh = searchParams.get("refresh") === "true";
+
   const supabase = await getSupabase();
 
   // DB에서 랭킹 읽기
-  const { data: dbRankings } = await supabase
-    .from("academy_rankings")
-    .select("*")
-    .order("trend_score", { ascending: false });
+  let query = supabase.from("academy_rankings").select("*").order("trend_score", { ascending: false });
+  if (requestedArea) query = query.eq("area", requestedArea);
+  const { data: dbRankings } = await query;
 
   // DB에 데이터가 있고, 최근 7일 이내 업데이트면 DB 결과 반환
   if (dbRankings && dbRankings.length > 0) {
     const lastUpdated = new Date(dbRankings[0].last_updated).getTime();
     const isRecent = Date.now() - lastUpdated < 7 * 86400000;
 
-    if (isRecent) {
+    if (isRecent && !forceRefresh) {
       const result: Record<string, any[]> = {};
       for (const r of dbRankings) {
         if (!result[r.area]) result[r.area] = [];
@@ -148,7 +166,12 @@ export async function GET() {
   const fileData = loadFileData();
   const result: Record<string, any[]> = {};
 
-  for (const area of RANK_AREAS) {
+  // 요청된 지역만 갱신 (없으면 전체, but 최대 5개씩)
+  const targetAreas = requestedArea
+    ? RANK_AREAS.filter((a) => a.area === requestedArea)
+    : RANK_AREAS.slice(0, 5); // 전체 요청 시 5개씩만 (타임아웃 방지)
+
+  for (const area of targetAreas) {
     // 1. 기존 DB 후보 가져오기
     const { data: existing } = await supabase
       .from("academy_rankings")

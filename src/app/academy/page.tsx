@@ -52,6 +52,7 @@ function TopAcademies() {
   const [rankAreas, setRankAreas] = useState<string[]>([]);
   const [activeRankCat, setActiveRankCat] = useState("");
   const [rankLoading, setRankLoading] = useState(true);
+  const [rankGroup, setRankGroup] = useState<"서울" | "경기" | "기타">("서울");
 
   const fetchTop = useCallback(async () => {
     setLoading(true);
@@ -154,13 +155,29 @@ function TopAcademies() {
               <h2 className="text-[12px] font-bold">지역별 학원 랭킹</h2>
               <span className="text-[9px] text-muted-light ml-auto">검색 트렌드</span>
             </div>
-            <div className="flex flex-wrap gap-0.5 px-2 py-1.5 border-b border-border-light bg-surface-secondary/30">
-              {rankAreas.map((cat) => (
-                <button key={cat} onClick={() => setActiveRankCat(cat)}
-                  className={`px-1.5 py-0.5 rounded text-[9px] font-medium transition-colors ${activeRankCat === cat ? "bg-primary-600 text-white" : "text-muted hover:bg-surface-secondary"}`}>
-                  {cat}
+            {/* 시도 그룹 탭 */}
+            <div className="flex gap-0 border-b border-border-light">
+              {(["서울", "경기", "기타"] as const).map((g) => (
+                <button key={g} onClick={() => { setRankGroup(g); setActiveRankCat(""); }}
+                  className={`flex-1 py-1.5 text-[10px] font-medium text-center transition-colors ${rankGroup === g ? "bg-primary-50 text-primary-700 border-b-2 border-primary-600 -mb-px" : "text-muted hover:bg-surface-hover"}`}>
+                  {g}
                 </button>
               ))}
+            </div>
+            {/* 세부 지역 탭 */}
+            <div className="flex flex-wrap gap-0.5 px-2 py-1.5 border-b border-border-light bg-surface-secondary/30 max-h-24 overflow-y-auto">
+              {rankAreas
+                .filter((a) => {
+                  if (rankGroup === "서울") return a.startsWith("서울");
+                  if (rankGroup === "경기") return a.startsWith("경기");
+                  return !a.startsWith("서울") && !a.startsWith("경기");
+                })
+                .map((cat) => (
+                  <button key={cat} onClick={() => setActiveRankCat(cat)}
+                    className={`px-1.5 py-0.5 rounded text-[9px] font-medium transition-colors ${activeRankCat === cat ? "bg-primary-600 text-white" : "text-muted hover:bg-surface-secondary"}`}>
+                    {cat.replace("서울 ", "").replace("경기 ", "")}
+                  </button>
+                ))}
             </div>
             {rankLoading ? (
               <div className="flex justify-center py-6"><Loader2 className="w-4 h-4 text-primary-600 animate-spin" /></div>
