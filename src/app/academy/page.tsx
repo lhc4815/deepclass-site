@@ -12,7 +12,7 @@ interface AcademyItem {
   dormitory: boolean; established: string;
 }
 
-interface RankItem { name: string; searchVolume: number; }
+interface RankItem { name: string; capacity: number; district: string; course: string; phone: string; established: string; }
 
 export default function AcademyPage() {
   const [mainTab, setMainTab] = useState<"top" | "search">("top");
@@ -156,8 +156,8 @@ function TopAcademies() {
           <div className="bg-surface border border-border rounded-lg overflow-hidden sticky top-16">
             <div className="px-4 py-2 border-b-2 border-foreground bg-surface-secondary flex items-center gap-1.5">
               <Trophy className="w-4 h-4 text-amber-500" />
-              <h2 className="text-[12px] font-bold">인기 랭킹</h2>
-              <span className="text-[9px] text-muted-light ml-auto">뉴스 검색량 기준</span>
+              <h2 className="text-[12px] font-bold">지역별 학원 랭킹</h2>
+              <span className="text-[9px] text-muted-light ml-auto">정원 기준</span>
             </div>
             <div className="flex flex-wrap gap-0.5 px-2 py-1.5 border-b border-border-light bg-surface-secondary/30">
               {rankAreas.map((cat) => (
@@ -172,22 +172,26 @@ function TopAcademies() {
             ) : activeRankCat && rankings[activeRankCat] ? (
               <div className="divide-y divide-border-light">
                 {rankings[activeRankCat].map((r, i) => {
-                  const maxVol = rankings[activeRankCat][0]?.searchVolume || 1;
-                  const pct = Math.round((r.searchVolume / maxVol) * 100);
+                  const maxCap = rankings[activeRankCat][0]?.capacity || 1;
+                  const pct = Math.round((r.capacity / maxCap) * 100);
                   return (
-                    <div key={r.name} className="flex items-center gap-2 px-3 py-2 hover:bg-surface-hover transition-colors">
-                      <span className={`text-[11px] font-extrabold w-4 text-center ${
-                        i === 0 ? "text-amber-500" : i === 1 ? "text-gray-400" : i === 2 ? "text-amber-700" : "text-muted-light"
-                      }`}>{i + 1}</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[11px] font-medium truncate">{r.name}</p>
-                        <div className="w-full h-1 bg-surface-secondary rounded-full mt-0.5 overflow-hidden">
-                          <div className="h-full bg-primary-400 rounded-full" style={{ width: `${pct}%` }} />
+                    <div key={`${r.name}-${i}`} className="px-3 py-2 hover:bg-surface-hover transition-colors">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[11px] font-extrabold w-4 text-center ${
+                          i === 0 ? "text-amber-500" : i === 1 ? "text-gray-400" : i === 2 ? "text-amber-700" : "text-muted-light"
+                        }`}>{i + 1}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[11px] font-semibold truncate">{r.name}</p>
+                          <div className="flex items-center gap-1.5 text-[9px] text-muted-light mt-0.5">
+                            {r.established && <span>{r.established.slice(0,4)}~</span>}
+                            <span>정원 {r.capacity.toLocaleString()}</span>
+                            {r.phone && <span>· {r.phone}</span>}
+                          </div>
+                          <div className="w-full h-1 bg-surface-secondary rounded-full mt-0.5 overflow-hidden">
+                            <div className="h-full bg-primary-400 rounded-full" style={{ width: `${pct}%` }} />
+                          </div>
                         </div>
                       </div>
-                      <span className="text-[9px] text-muted-light flex-shrink-0">
-                        {r.searchVolume >= 10000 ? `${(r.searchVolume / 10000).toFixed(1)}만` : r.searchVolume >= 1000 ? `${(r.searchVolume / 1000).toFixed(1)}천` : r.searchVolume}
-                      </span>
                     </div>
                   );
                 })}
