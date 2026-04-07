@@ -52,11 +52,11 @@ function TopAcademies() {
   const [rankAreas, setRankAreas] = useState<string[]>([]);
   const [activeRankCat, setActiveRankCat] = useState("");
   const [rankLoading, setRankLoading] = useState(true);
-  const [rankGroup, setRankGroup] = useState<"서울" | "경기" | "기타">("서울");
+  const [rankGroup, setRankGroup] = useState<"서울" | "경기" | "전국">("서울");
 
   const fetchTop = useCallback(async () => {
     setLoading(true);
-    const params = new URLSearchParams({ region, limit: "30" });
+    const params = new URLSearchParams({ region, limit: "100" });
     if (district) params.set("district", district);
     const res = await fetch(`/api/academy-top?${params}`);
     const data = await res.json();
@@ -153,11 +153,11 @@ function TopAcademies() {
             <div className="px-4 py-2 border-b-2 border-foreground bg-surface-secondary flex items-center gap-1.5">
               <Trophy className="w-4 h-4 text-amber-500" />
               <h2 className="text-[12px] font-bold">지역별 학원 랭킹</h2>
-              <span className="text-[9px] text-muted-light ml-auto">검색 트렌드</span>
+              <span className="text-[9px] text-muted-light ml-auto">네이버 검색 트렌드 기반</span>
             </div>
             {/* 시도 그룹 탭 */}
             <div className="flex gap-0 border-b border-border-light">
-              {(["서울", "경기", "기타"] as const).map((g) => (
+              {(["서울", "경기", "전국"] as const).map((g) => (
                 <button key={g} onClick={() => { setRankGroup(g); setActiveRankCat(""); }}
                   className={`flex-1 py-1.5 text-[10px] font-medium text-center transition-colors ${rankGroup === g ? "bg-primary-50 text-primary-700 border-b-2 border-primary-600 -mb-px" : "text-muted hover:bg-surface-hover"}`}>
                   {g}

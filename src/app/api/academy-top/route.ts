@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const region = searchParams.get("region") || "서울";
   const district = searchParams.get("district") || "";
-  const limit = Math.min(Number(searchParams.get("limit")) || 20, 50);
+  const limit = Math.min(Number(searchParams.get("limit")) || 100, 200);
 
   const data = loadData();
 

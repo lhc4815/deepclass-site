@@ -1,6 +1,6 @@
 "use client";
 
-import { School, Search, MapPin, Phone, ExternalLink, Loader2, ChevronLeft, ChevronRight, Building, GraduationCap } from "lucide-react";
+import { School, Search, MapPin, Phone, ExternalLink, Loader2, ChevronLeft, ChevronRight, Building, GraduationCap, Trophy } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 
 const regions = [
