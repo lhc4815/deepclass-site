@@ -55,12 +55,14 @@ export async function POST() {
 
   for (const q of COLLECT_QUERIES) {
     try {
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
       const url = new URL("https://www.googleapis.com/youtube/v3/search");
       url.searchParams.set("part", "snippet");
       url.searchParams.set("q", q.query);
       url.searchParams.set("type", "video");
       url.searchParams.set("maxResults", "10");
-      url.searchParams.set("order", "relevance");
+      url.searchParams.set("order", "date");
+      url.searchParams.set("publishedAfter", thirtyDaysAgo);
       url.searchParams.set("regionCode", "KR");
       url.searchParams.set("relevanceLanguage", "ko");
       url.searchParams.set("key", YOUTUBE_API_KEY);

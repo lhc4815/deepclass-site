@@ -32,15 +32,19 @@ async function getSupabase() {
   );
 }
 
-async function searchYouTube(query: string, maxResults = 10): Promise<any[]> {
+async function searchYouTube(query: string, maxResults = 10, order = "date"): Promise<any[]> {
   if (!YOUTUBE_API_KEY) return [];
+
+  // 최근 30일 영상만
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
 
   const url = new URL("https://www.googleapis.com/youtube/v3/search");
   url.searchParams.set("part", "snippet");
   url.searchParams.set("q", query);
   url.searchParams.set("type", "video");
   url.searchParams.set("maxResults", String(maxResults));
-  url.searchParams.set("order", "relevance");
+  url.searchParams.set("order", order);
+  url.searchParams.set("publishedAfter", thirtyDaysAgo);
   url.searchParams.set("regionCode", "KR");
   url.searchParams.set("relevanceLanguage", "ko");
   url.searchParams.set("key", YOUTUBE_API_KEY);
