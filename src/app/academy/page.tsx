@@ -12,7 +12,7 @@ interface AcademyItem {
   dormitory: boolean; established: string;
 }
 
-interface RankItem { name: string; capacity: number; district: string; course: string; phone: string; established: string; }
+interface RankItem { name: string; trend: number; district: string; phone: string; established: string; }
 
 export default function AcademyPage() {
   const [mainTab, setMainTab] = useState<"top" | "search">("top");
@@ -157,7 +157,7 @@ function TopAcademies() {
             <div className="px-4 py-2 border-b-2 border-foreground bg-surface-secondary flex items-center gap-1.5">
               <Trophy className="w-4 h-4 text-amber-500" />
               <h2 className="text-[12px] font-bold">지역별 학원 랭킹</h2>
-              <span className="text-[9px] text-muted-light ml-auto">정원 기준</span>
+              <span className="text-[9px] text-muted-light ml-auto">검색 트렌드</span>
             </div>
             <div className="flex flex-wrap gap-0.5 px-2 py-1.5 border-b border-border-light bg-surface-secondary/30">
               {rankAreas.map((cat) => (
@@ -172,8 +172,8 @@ function TopAcademies() {
             ) : activeRankCat && rankings[activeRankCat] ? (
               <div className="divide-y divide-border-light">
                 {rankings[activeRankCat].map((r, i) => {
-                  const maxCap = rankings[activeRankCat][0]?.capacity || 1;
-                  const pct = Math.round((r.capacity / maxCap) * 100);
+                  const maxTrend = rankings[activeRankCat][0]?.trend || 1;
+                  const pct = maxTrend > 0 ? Math.round((r.trend / maxTrend) * 100) : 0;
                   return (
                     <div key={`${r.name}-${i}`} className="px-3 py-2 hover:bg-surface-hover transition-colors">
                       <div className="flex items-center gap-2">
@@ -184,12 +184,14 @@ function TopAcademies() {
                           <p className="text-[11px] font-semibold truncate">{r.name}</p>
                           <div className="flex items-center gap-1.5 text-[9px] text-muted-light mt-0.5">
                             {r.established && <span>{r.established.slice(0,4)}~</span>}
-                            <span>정원 {r.capacity.toLocaleString()}</span>
-                            {r.phone && <span>· {r.phone}</span>}
+                            {r.phone && <span>{r.phone}</span>}
+                            {r.trend > 0 && <span className="text-primary-600">트렌드 {r.trend.toFixed(1)}</span>}
                           </div>
-                          <div className="w-full h-1 bg-surface-secondary rounded-full mt-0.5 overflow-hidden">
-                            <div className="h-full bg-primary-400 rounded-full" style={{ width: `${pct}%` }} />
-                          </div>
+                          {pct > 0 && (
+                            <div className="w-full h-1 bg-surface-secondary rounded-full mt-0.5 overflow-hidden">
+                              <div className="h-full bg-primary-400 rounded-full" style={{ width: `${pct}%` }} />
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

@@ -55,7 +55,8 @@
       "Bash(sed -i 's/categoryColors\\\\[/NEWS_CATEGORY_COLORS[/g' src/app/news/page.tsx)",
       "Bash(npm ls:*)",
       "Bash(iconv -f euc-kr -t utf-8)",
-      "Bash(iconv -f cp949 -t utf-8 /c/Projects/deepclass.site/data/학원교습소정보_2026년02월28일기준.csv)"
+      "Bash(iconv -f cp949 -t utf-8 /c/Projects/deepclass.site/data/학원교습소정보_2026년02월28일기준.csv)",
+      "Bash(python3 -c ':*)"
     ]
   }
 }
