@@ -200,18 +200,45 @@ export async function GET(request: Request) {
       .sort((a, b) => b.cap - a.cap)
       .slice(0, 30); // 새 후보 30개 추가
 
-    // 3. 전체 후보 = 기존 + 신규
+    // 3. AI 브랜드 정보 조회 (있으면 사용)
+    const { data: brandData } = await supabase
+      .from("academy_brands")
+      .select("original_name, common_name, brand")
+      .eq("area", area.area);
+
+    const brandMap = new Map<string, { common: string; brand: string }>();
+    if (brandData) {
+      for (const b of brandData) brandMap.set(b.original_name, { common: b.common_name, brand: b.brand });
+    }
+
+    // 4. 전체 후보 = 기존 + 신규 (AI 이름 활용)
     const allCandidates = [
-      ...(existing || []).map((e: any) => ({ name: e.name, shortName: e.short_name })),
-      ...newCandidates.map((c) => ({ name: c.n, shortName: shortenName(c.n) })),
+      ...(existing || []).map((e: any) => {
+        const ai = brandMap.get(e.name);
+        return { name: e.name, shortName: ai?.common || e.short_name, brand: ai?.brand || "" };
+      }),
+      ...newCandidates.map((c) => {
+        const ai = brandMap.get(c.n);
+        return { name: c.n, shortName: ai?.common || shortenName(c.n), brand: ai?.brand || "" };
+      }),
     ];
 
-    // 4. 트렌드 조회
-    const trends = await getTrends(allCandidates.map((c) => c.shortName));
+    // 브랜드별 대표 후보만 남기기 (같은 브랜드 중복 제거)
+    const seenBrands = new Set<string>();
+    const deduped = allCandidates.filter((c) => {
+      if (c.brand && c.brand !== "제외") {
+        if (seenBrands.has(c.brand)) return false;
+        seenBrands.add(c.brand);
+      }
+      return c.brand !== "제외";
+    });
 
-    // 5. DB에 upsert (점수 업데이트 + 새 후보 추가)
+    // 5. 트렌드 조회
+    const trends = await getTrends(deduped.map((c) => c.shortName));
+
+    // 6. DB에 upsert
     const now = new Date().toISOString();
-    for (const cand of allCandidates) {
+    for (const cand of deduped) {
       const score = trends[cand.shortName] || 0;
       const existingItem = (existing || []).find((e: any) => e.name === cand.name);
       const fileItem = fileData.find((f) => f.n === cand.name);
