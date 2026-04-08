@@ -140,38 +140,41 @@ export async function GET(request: Request) {
     const lastUpdated = new Date(dbRankings[0].last_updated).getTime();
     const isRecent = Date.now() - lastUpdated < 7 * 86400000;
 
-    if (isRecent && !forceRefresh) {
-      const result: Record<string, any[]> = {};
-      for (const r of dbRankings) {
-        if (!result[r.area]) result[r.area] = [];
-        result[r.area].push({
-          name: r.name,
-          shortName: r.short_name,
-          trend: r.trend_score,
-          district: r.district,
-          phone: r.phone,
-          established: r.established,
-          weeksRanked: r.weeks_ranked,
-        });
-      }
-      // 각 지역 TOP 30
-      for (const area in result) {
-        result[area] = result[area].sort((a: any, b: any) => b.trend - a.trend).slice(0, 30);
-      }
+    // DB 결과를 먼저 구성
+    const result: Record<string, any[]> = {};
+    for (const r of dbRankings) {
+      if (!result[r.area]) result[r.area] = [];
+      result[r.area].push({
+        name: r.name, shortName: r.short_name, trend: r.trend_score,
+        district: r.district, phone: r.phone, established: r.established,
+        weeksRanked: r.weeks_ranked,
+      });
+    }
+    for (const area in result) {
+      result[area] = result[area].sort((a: any, b: any) => b.trend - a.trend).slice(0, 30);
+    }
+
+    // DB에 없는 지역 찾기
+    const missingAreas = RANK_AREAS.filter((a) => !result[a.area] || result[a.area].length === 0);
+
+    if (missingAreas.length === 0 && isRecent && !forceRefresh) {
+      // 모든 지역 데이터 있고 최신 → 바로 반환
       return NextResponse.json({ success: true, data: result, areas: RANK_AREAS.map((a) => a.area), fromDB: true });
     }
-  }
 
-  // === 갱신 필요: 트렌드 조회 + DB 업데이트 ===
-  const fileData = loadFileData();
-  const result: Record<string, any[]> = {};
+    // 빠진 지역 5개씩 갱신 (백그라운드 점진 채우기)
+    const areasToRefresh = forceRefresh
+      ? (requestedArea ? RANK_AREAS.filter((a) => a.area === requestedArea) : RANK_AREAS.slice(0, 5))
+      : missingAreas.slice(0, 5);
 
-  // 요청된 지역만 갱신 (없으면 전체, but 최대 5개씩)
-  const targetAreas = requestedArea
-    ? RANK_AREAS.filter((a) => a.area === requestedArea)
-    : RANK_AREAS.slice(0, 5); // 전체 요청 시 5개씩만 (타임아웃 방지)
+    if (areasToRefresh.length === 0) {
+      return NextResponse.json({ success: true, data: result, areas: RANK_AREAS.map((a) => a.area), fromDB: true });
+    }
 
-  for (const area of targetAreas) {
+    // 있는 데이터는 먼저 반환하되, 빠진 지역을 채우기 위해 갱신 진행
+    const fileData = loadFileData();
+
+    for (const area of areasToRefresh) {
     // 1. 기존 DB 후보 가져오기
     const { data: existing } = await supabase
       .from("academy_rankings")
@@ -260,6 +263,10 @@ export async function GET(request: Request) {
     data: result,
     areas: RANK_AREAS.map((a) => a.area),
     fromDB: false,
-    message: "랭킹 갱신 완료",
+    message: `${areasToRefresh.length}개 지역 갱신 완료`,
   });
+  } // if (dbRankings)
+
+  // DB 자체가 비어있으면 빈 결과
+  return NextResponse.json({ success: true, data: {}, areas: RANK_AREAS.map((a) => a.area) });
 }
