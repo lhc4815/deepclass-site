@@ -27,11 +27,14 @@ interface ScheduleItem {
   type: string; category: string; important: boolean; description: string | null;
 }
 
+import { School as SchoolIcon } from "lucide-react";
+
 const adminTabs = [
   { id: "dashboard", label: "대시보드", icon: BarChart3 },
   { id: "schedule", label: "일정 관리", icon: Calendar },
   { id: "news", label: "뉴스 관리", icon: Newspaper },
   { id: "videos", label: "영상 관리", icon: Play },
+  { id: "academy", label: "학원 AI 정리", icon: SchoolIcon },
   { id: "users", label: "회원 관리", icon: Users },
 ];
 
@@ -357,6 +360,9 @@ export default function AdminPage() {
       {/* Videos Management Tab */}
       {activeTab === "videos" && <VideoManager />}
 
+      {/* Academy AI Clean Tab */}
+      {activeTab === "academy" && <AcademyCleanManager />}
+
       {/* Users Management Tab */}
       {activeTab === "users" && (
         <div className="space-y-4">
@@ -389,6 +395,119 @@ export default function AdminPage() {
 }
 
 /* ── 일정 관리 컴포넌트 ── */
+/* ── 학원 AI 정리 ── */
+const CLEAN_AREAS = [
+  ...["강남구","강동구","강북구","강서구","관악구","광진구","구로구","금천구","노원구","도봉구",
+    "동대문구","동작구","마포구","서대문구","서초구","성동구","성북구","송파구","양천구",
+    "영등포구","용산구","은평구","종로구","중구","중랑구"
+  ].map(d => ({ area: `서울 ${d}`, region: "서울", district: d })),
+  ...["고양시","성남시","수원시","용인시","부천시","안산시","안양시","화성시","남양주시","김포시"
+  ].map(d => ({ area: `경기 ${d}`, region: "경기", district: d })),
+  { area: "부산", region: "부산", district: "" },
+  { area: "대구", region: "대구", district: "" },
+  { area: "인천", region: "인천", district: "" },
+  { area: "대전", region: "대전", district: "" },
+];
+
+function AcademyCleanManager() {
+  const [processing, setProcessing] = useState(false);
+  const [results, setResults] = useState<string[]>([]);
+  const [brands, setBrands] = useState<any[]>([]);
+  const [selectedArea, setSelectedArea] = useState("");
+
+  const cleanArea = async (area: any) => {
+    setProcessing(true);
+    setResults((p) => [...p, `${area.area} 처리 중...`]);
+    try {
+      const res = await fetch("/api/academy-clean", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(area),
+      });
+      const data = await res.json();
+      setResults((p) => [...p, `✅ ${data.message || data.error}`]);
+    } catch (err: any) {
+      setResults((p) => [...p, `❌ ${area.area}: ${err.message}`]);
+    }
+    setProcessing(false);
+  };
+
+  const cleanAll = async () => {
+    for (const area of CLEAN_AREAS) {
+      await cleanArea(area);
+    }
+  };
+
+  const viewBrands = async (area: string) => {
+    setSelectedArea(area);
+    const res = await fetch(`/api/academy-clean?area=${encodeURIComponent(area)}`);
+    const data = await res.json();
+    if (data.success) setBrands(data.brands || []);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-sm font-semibold">학원명 AI 정리</h2>
+          <p className="text-[11px] text-muted-light">Claude AI로 학원명을 정리하고 브랜드별로 통합합니다</p>
+        </div>
+        <button onClick={cleanAll} disabled={processing}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50">
+          {processing ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+          전체 지역 정리
+        </button>
+      </div>
+
+      {/* 개별 지역 버튼 */}
+      <div className="bg-surface border border-border rounded-lg p-3">
+        <p className="text-[11px] font-semibold mb-2">개별 지역 정리</p>
+        <div className="flex flex-wrap gap-1">
+          {CLEAN_AREAS.map((a) => (
+            <button key={a.area} onClick={() => cleanArea(a)} disabled={processing}
+              className="px-2 py-0.5 rounded text-[10px] font-medium bg-surface-secondary text-muted hover:bg-primary-50 hover:text-primary-600 disabled:opacity-50">
+              {a.area}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 처리 로그 */}
+      {results.length > 0 && (
+        <div className="bg-surface border border-border rounded-lg p-3 max-h-48 overflow-y-auto">
+          <p className="text-[11px] font-semibold mb-1">처리 로그</p>
+          {results.map((r, i) => (
+            <p key={i} className="text-[10px] text-muted">{r}</p>
+          ))}
+        </div>
+      )}
+
+      {/* 브랜드 조회 */}
+      <div className="bg-surface border border-border rounded-lg p-3">
+        <p className="text-[11px] font-semibold mb-2">브랜드 조회</p>
+        <div className="flex items-center gap-2 mb-2">
+          <select value={selectedArea} onChange={(e) => viewBrands(e.target.value)}
+            className="px-2 py-1 bg-surface border border-border rounded text-[11px] focus:outline-none">
+            <option value="">지역 선택</option>
+            {CLEAN_AREAS.map((a) => <option key={a.area} value={a.area}>{a.area}</option>)}
+          </select>
+        </div>
+        {brands.length > 0 && (
+          <div className="space-y-1 max-h-60 overflow-y-auto">
+            {brands.map((b, i) => (
+              <div key={i} className="flex items-center gap-2 text-[11px] py-1 border-b border-border-light">
+                <span className="font-semibold w-24 truncate">{b.brand}</span>
+                <span className="text-muted-light">({b.count}개)</span>
+                <span className="text-muted truncate flex-1">{b.names.join(", ")}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const TYPES = ["수능", "원서접수", "전형", "합격발표", "등록", "발표", "모집", "기타"];
 const CATEGORIES = ["공통", "수시", "정시"];
 
